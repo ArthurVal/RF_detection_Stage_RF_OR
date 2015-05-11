@@ -7,6 +7,7 @@ project(rf_riddle)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
+  rviz
   std_msgs
 )
 
@@ -68,6 +69,7 @@ find_package(catkin REQUIRED COMPONENTS
 # generate_messages(
 #   DEPENDENCIES
 #   std_msgs
+#   rviz
 # )
 
 ###################################
@@ -94,6 +96,7 @@ catkin_package(
 ## Your package locations should be listed before other locations
 # include_directories(include)
 include_directories(
+	include/${PROJECT_NAME}/
   ${catkin_INCLUDE_DIRS}
 )
 
@@ -103,16 +106,16 @@ include_directories(
 # )
 
 ## Declare a cpp executable
-# add_executable(rf_riddle_node src/rf_riddle_node.cpp)
+ add_executable(rf_riddle_node src/main.cpp src/RF_detection.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
 # add_dependencies(rf_riddle_node rf_riddle_generate_messages_cpp)
 
-## Specify libraries to link a library or executable target against
-# target_link_libraries(rf_riddle_node
-#   ${catkin_LIBRARIES}
-# )
+# Specify libraries to link a library or executable target against
+ target_link_libraries(rf_riddle_node
+   ${catkin_LIBRARIES}
+ )
 
 #############
 ## Install ##
@@ -129,11 +132,11 @@ include_directories(
 # )
 
 ## Mark executables and/or libraries for installation
-# install(TARGETS rf_riddle rf_riddle_node
-#   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
+ install(TARGETS rf_riddle_node
+   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+ )
 
 ## Mark cpp header files for installation
 # install(DIRECTORY include/${PROJECT_NAME}/
