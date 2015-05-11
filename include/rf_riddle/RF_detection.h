@@ -10,7 +10,7 @@
 #include <string> 
 #include <cmath>
 
-#define N_RF_MAX 10
+#define N_RF_MAX 50
 
 #define STUB_N_DETECTION 2
 #define STUB_FREQ 0.5
@@ -40,7 +40,7 @@ class RF_detection
 		ros::Publisher* chatter_pub_line_rviz;
 		ros::Publisher* chatter_pub_gauss;
 		bool enableStub;
-		int angle;
+		int angleStub;
 		unsigned int iter;
 		//TBD
 
