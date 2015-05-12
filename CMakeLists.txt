@@ -106,7 +106,7 @@ include_directories(
 # )
 
 ## Declare a cpp executable
- add_executable(rf_riddle_node src/main.cpp src/RF_detection.cpp)
+ add_executable(rf_riddle_node src/main.cpp src/RF_detection.cpp src/RF_stub.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes

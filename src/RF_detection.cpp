@@ -3,18 +3,24 @@
 /*=================================================================================*/
 /*-----------------------		 RF_detection::RF_detection()		-----------------------*/
 /*=================================================================================*/
-RF_detection::RF_detection(int argc, char* argv[], ros::Publisher* chatter_line_rviz, ros::Publisher* chatter_gauss, bool stub)
-{		
+RF_detection::RF_detection(ros::Publisher* chatter_line_rviz, ros::Publisher* chatter_gauss, bool thetadis, bool print)
+{	
+		
 	chatter_pub_line_rviz = chatter_line_rviz;
 	chatter_pub_gauss = chatter_gauss;
 
-	enableStub = stub;
-	if(enableStub)
-		ROS_INFO("Stub mode activated");
+		//Set to default (May be changed in parseArgument)
+	thetaDisable = thetadis;
+	debug = print;
+
+	if(debug)
+		ROS_INFO("[RF node] Debug mode activated");
+	if(thetaDisable)
+		ROS_INFO("[RF node] 2D RF data Acquisition");
 
 	data_uart_spherical.n = 0;
-	angle = 0;
-	iter = 0;		
+	iter = 0;	
+
 }
 
 
@@ -32,32 +38,9 @@ int RF_detection::updateRF()
 		//Conversion I,Q => dist
 		//Application changement référenciel RF => référenciel camera
 		//Update msg & publish to rostopic
-
-
-		//=================//
-		// Algo stub updateRF() //
-		//=================//
-
-		//Simulation de  dist & theta
-		//Application changement référenciel RF => référenciel camera
-		//Update msg & publish to rostopic
-
-
 	
 		//Get the UART data from RF detection
-	if(!enableStub){
-		//UART Acquisition
-
-		//------------//
-		//		TODO		//
-		//------------//
-
-
-	}else{
-		//Stub fake detection
-		this->stubUART();		
-	}
-
+	getDataUART();
 
 	if(data_uart_spherical.n == 0){
 		return 0;
@@ -86,7 +69,7 @@ int RF_detection::updateRF()
 		detect_rf[i].id = 0;
 		text_rf[i].id = 1;
 	
-		if(THETA_DISABLE == 1)
+		if(thetaDisable)
 			detect_rf[i].type = visualization_msgs::Marker::LINE_LIST;
 		else
 			detect_rf[i].type = visualization_msgs::Marker::POINTS;
@@ -98,8 +81,8 @@ int RF_detection::updateRF()
 		detect_rf[i].pose.orientation.w = text_rf[i].pose.orientation.w = 1.0;
 		
 			//Scaling
-		detect_rf[i].scale.x = 0.01;
-		text_rf[i].scale.z = 0.1;
+		detect_rf[i].scale.x = 0.05;
+		text_rf[i].scale.z = 0.07;
 
 			//Color
 				//Visible
@@ -108,11 +91,13 @@ int RF_detection::updateRF()
 				//Red line & green text
 		detect_rf[i].color.r = 1.0;
 		text_rf[i].color.g = 1.0;
+		text_rf[i].color.r = 1.0;
+		text_rf[i].color.b = 1.0;
 
 			//Create cartesian point detected
 		geometry_msgs::Point p;
 
-		if(THETA_DISABLE == 1){
+		if(thetaDisable){
 
 			//Creating a line require 2 points
 
@@ -144,10 +129,16 @@ int RF_detection::updateRF()
 		text_rf[i].text = textOutput.str();
 
 			//Publish to ROS
-		chatter_pub_line_rviz->publish(detect_rf[i]);
-		chatter_pub_line_rviz->publish(text_rf[i]);		
-			
+		detect_rf[i].lifetime = text_rf[i].lifetime = ros::Duration(1);
+		if(chatter_pub_line_rviz){
+			chatter_pub_line_rviz->publish(detect_rf[i]);
+			chatter_pub_line_rviz->publish(text_rf[i]);
+		}	
+		
 	}// for n_detection
+
+	if(debug)
+		printOutput();
 
 	++iter;
 		
@@ -155,43 +146,25 @@ int RF_detection::updateRF()
 }
 
 
-
-
-
-/*=================================================================================*/
-/*=============================== Private functions ===============================*/
-/*=================================================================================*/
+/*===================================================================================*/
+/*=============================== Protected functions ===============================*/
+/*===================================================================================*/
 
 
 /*=================================================================================*/
-/*------------------------		 RF_detection::stubUART()		-------------------------*/
-/*------------------ Function that simulate the UART data input -------------------*/
+/*---------------------		 RF_detection::getDataUART()		-------------------------*/
+/*------------------ Function that get the UART data input ------------------------*/
 /*=================================================================================*/
 
-void RF_detection::stubUART()
+void RF_detection::getDataUART()
 {
-	data_uart_spherical.n = STUB_N_DETECTION;
-
-	for(int i = 0 ; i < (data_uart_spherical.n) ; ++i){
-		data_uart_spherical.dist[i] = 2;
-		data_uart_spherical.phi[i] = angleStub;	//Angle between x & z (0 -> 360)
-
-		if(i == 1)
-			data_uart_spherical.phi[i] = -angleStub;
-
-		data_uart_spherical.theta[i] = 90; //Angle between x & y (0 -> 180)
-	}
-
-	if(angleStub > 45)
-		angleStub = -45;
-	else
-		angleStub = (angleStub +1);
-
+	std::cout << "==== UART not implemented yet ====" << std::endl;
+	/*TODO*/
 }
 
 /*=================================================================================*/
 /*-----------------------		 RF_detection::convToCart()		-------------------------*/
-/*---------- Classical conversion from spheric coordinates to cartesian ----*------*/
+/*---------- Classical conversion from spheric coordinates to cartesian -----------*/
 /*=================================================================================*/
 
 void RF_detection::convToCart()
@@ -207,11 +180,37 @@ void RF_detection::convToCart()
 	}	
 }
 
+/*=================================================================================*/
+/*-----------------------		 RF_detection::printOutput()		-------------------------*/
+/*---------------------- Print coordinates for debug purpose ----------------------*/
+/*=================================================================================*/
 
+void RF_detection::printOutput()
+{
+	ROS_INFO("============================================");
+	ROS_INFO("> RF node internal data (%d detection max) <",N_RF_MAX);
+	ROS_INFO("============================================");
 
+	ROS_INFO(">> Iteration %d",iter);
 
-
-
-
-
+	if(THETA_DISABLE == 1)
+		ROS_INFO(">> Theta angle disable (2D detection)");
+	ROS_INFO(">> Number of detection : %d", data_uart_spherical.n);
+	
+	if(data_uart_spherical.n >= 1){
+		for(int i = 0; i < data_uart_spherical.n ; ++i){
+			ROS_INFO("------------------------");			
+			ROS_INFO(">> Detection %d :", i);		
+			ROS_INFO(">>> Spherical :");			
+			ROS_INFO(">> R = %f", data_uart_spherical.dist[i]);			
+			ROS_INFO(">> Phi = %f", data_uart_spherical.phi[i]);			
+			ROS_INFO(">> Theta = %f", data_uart_spherical.theta[i]);
+			ROS_INFO(">>> Cartesian :");			
+			ROS_INFO(">> x = %f", data_uart_cartesian.x[i]);			
+			ROS_INFO(">> y = %f", data_uart_cartesian.y[i]);			
+			ROS_INFO(">> z = %f", data_uart_cartesian.z[i]);			
+		}
+		ROS_INFO("------------------------");			
+	}
+}
 

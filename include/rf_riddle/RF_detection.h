@@ -6,16 +6,16 @@
 #include <visualization_msgs/Marker.h>
 
 #include <sstream>
-#include <stdlib.h>
-#include <string> 
+#include <cstdio>
+#include <cstdlib>
+#include <cstring> 
 #include <cmath>
 
 #define N_RF_MAX 50
 
-#define STUB_N_DETECTION 2
-#define STUB_FREQ 0.5
-
 #define THETA_DISABLE 1
+
+
 
 #ifndef M_PI
   #define M_PI 3.14159265
@@ -33,32 +33,37 @@ typedef struct {
 
 class RF_detection 
 {
-	private:
+	protected:
 			//Attributs
 		rf_data_spherical data_uart_spherical;
 		rf_data_cartesian data_uart_cartesian;
 		ros::Publisher* chatter_pub_line_rviz;
 		ros::Publisher* chatter_pub_gauss;
-		bool enableStub;
-		int angleStub;
+
+		bool debug;
+		bool thetaDisable;
+
 		unsigned int iter;
+
 		//TBD
 
 			//Method
-		void stubUART();
+		virtual void getDataUART();
 		void convToCart();
+		void printOutput();
 
-
-	protected:
 	public:
 			//Constructor
-		RF_detection(int argc, char* argv[], ros::Publisher* chatter_line_rviz, ros::Publisher* chatter_gauss, bool stub = true);
+		RF_detection(	ros::Publisher* chatter_line_rviz = NULL, 
+									ros::Publisher* chatter_gauss = NULL,  
+									bool thetadis = true, 
+									bool print = false);
 
 			//Destructor
 		~RF_detection(){};
 
-			//Main function (Acquisiiton UART or Stub -> Publishing result on topic "Marker rviz" + topic with gaussian distribution on "rf_detection")
-		int updateRF();
+			//Main function (Acquisiiton UART -> Publishing result on topic "Marker rviz" + topic with gaussian distribution on "rf_detection")
+		int updateRF();		
 	
 }; // class RF_detection 
 
