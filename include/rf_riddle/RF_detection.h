@@ -3,6 +3,7 @@
 
 #include "ros/ros.h"
 #include "ros/node_handle.h"
+#include "rf_riddle/RF.h"
 #include <visualization_msgs/Marker.h>
 
 #include <sstream>
@@ -12,10 +13,7 @@
 #include <cmath>
 
 #define N_RF_MAX 50
-
-#define THETA_DISABLE 1
-
-
+#define SIZE_DATA_RF 360 //360 Points => 1Pts/Degre
 
 #ifndef M_PI
   #define M_PI 3.14159265
@@ -24,24 +22,38 @@
 typedef struct {
 	unsigned char n;	
 	double dist[N_RF_MAX], theta[N_RF_MAX], phi[N_RF_MAX];		
-} rf_data_spherical; 
+} rf_detection_spherical; 
 
 typedef struct {
 	unsigned char n;	
 	double x[N_RF_MAX], y[N_RF_MAX], z[N_RF_MAX];		
-} rf_data_cartesian; 
+} rf_detection_cartesian; 
+
+typedef struct {
+	unsigned int index;	
+	double phi[SIZE_DATA_RF], intensity[SIZE_DATA_RF];		
+} rf_intensity_map; 
 
 class RF_detection 
 {
+	
 	protected:
 			//Attributs
-		rf_data_spherical data_uart_spherical;
-		rf_data_cartesian data_uart_cartesian;
+		rf_detection_spherical data_uart_spherical_RF;
+		rf_detection_cartesian data_uart_cartesian_RF;
+
+		rf_detection_spherical data_uart_spherical_camera;
+		rf_detection_cartesian data_uart_cartesian_camera;
+
+		rf_intensity_map data_intensity_map_RF;
+
 		ros::Publisher* chatter_pub_line_rviz;
 		ros::Publisher* chatter_pub_gauss;
 
-		bool debug;
+		bool verbose;
 		bool thetaDisable;
+		
+		double M_basis[4][4];
 
 		unsigned int iter;
 
@@ -50,6 +62,7 @@ class RF_detection
 			//Method
 		virtual void getDataUART();
 		void convToCart();
+		void convToCam();
 		void printOutput();
 
 	public:
@@ -62,7 +75,7 @@ class RF_detection
 			//Destructor
 		~RF_detection(){};
 
-			//Main function (Acquisiiton UART -> Publishing result on topic "Marker rviz" + topic with gaussian distribution on "rf_detection")
+			//Main function (Acquisition UART -> Publishing result on topic "Marker rviz" + topic with gaussian distribution on "rf_detection")
 		int updateRF();		
 	
 }; // class RF_detection 
