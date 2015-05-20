@@ -4,7 +4,8 @@
 /*----------------------------		 RF_stub::RF_stub()		---------------------------*/
 /*=================================================================================*/
 
-RF_stub::RF_stub(ros::Publisher* chatter_line_rviz, ros::Publisher* chatter_gauss, bool thetadis, bool print) : RF_detection(chatter_line_rviz, chatter_gauss, thetadis, print)
+RF_stub::RF_stub(ros::Publisher* chatter_line_rviz, ros::Publisher* chatter_gauss, bool thetadis, bool print) 
+: RF_detection(chatter_line_rviz, chatter_gauss, thetadis, print)
 {	
 	srand (time(NULL));
 	nStub = rand() % 5 + 1; // between 1 & 5 detections
