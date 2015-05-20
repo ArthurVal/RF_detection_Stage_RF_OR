@@ -295,9 +295,10 @@ void RF_detection::convToCam()
 /*-----------------------		 RF_detection::printOutput()		-------------------------*/
 /*---------------------- Print coordinates for debug purpose ----------------------*/
 /*=================================================================================*/
+void RF_detection::printOutput()
+{
 
-vls
->>>>>>>>>><<<<<<<<<<<<");	
+	ROS_INFO(">>>>>>>>>><<<<<<<<<<<<");	
 	ROS_INFO("> RF node verbose: ");
 	ROS_INFO(">> Iteration %d",iter);
 	if(thetaDisable)
