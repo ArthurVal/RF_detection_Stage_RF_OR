@@ -26,7 +26,7 @@ RF_detection::RF_detection(ros::Publisher* chatter_line_rviz, ros::Publisher* ch
 	data_intensity_map_RF.index = 0;
 	for(int i = 0 ; i < SIZE_DATA_RF ; ++i){
 		data_intensity_map_RF.intensity[i] = 0;
-		data_intensity_map_RF.phi[i] = i * (360.0/SIZE_DATA_RF);	
+		data_intensity_map_RF.phi[i] = i * (360.0/SIZE_DATA_RF) - 180;	
 	}	
 
 	M_basis[0][0] = 1;
@@ -168,7 +168,7 @@ int RF_detection::updateRF()
 		text_rf[i].text = textOutput.str();
 
 			//Publish to ROS
-		detect_rf[i].lifetime = text_rf[i].lifetime = ros::Duration(0.5);
+		detect_rf[i].lifetime = text_rf[i].lifetime = ros::Duration(3);
 	
 
 
@@ -185,7 +185,8 @@ int RF_detection::updateRF()
 		//Msg of the intensity map for the GUI
 	rf_riddle::RF intensity_map_rf;
 
-	intensity_map_rf.index = data_intensity_map_RF.index;	
+	intensity_map_rf.index = data_intensity_map_RF.index;
+	intensity_map_rf.sizeData = SIZE_DATA_RF;	
 	for(int i = 0 ; i < SIZE_DATA_RF ; ++i){
 		intensity_map_rf.phi.push_back(data_intensity_map_RF.phi[i]);
 		intensity_map_rf.intensity.push_back(data_intensity_map_RF.intensity[i]);
@@ -295,11 +296,8 @@ void RF_detection::convToCam()
 /*---------------------- Print coordinates for debug purpose ----------------------*/
 /*=================================================================================*/
 
-void RF_detection::printOutput()
-{
-
-	
-	ROS_INFO(">>>>>>>>>>>><<<<<<<<<<<<");	
+vls
+>>>>>>>>>><<<<<<<<<<<<");	
 	ROS_INFO("> RF node verbose: ");
 	ROS_INFO(">> Iteration %d",iter);
 	if(thetaDisable)

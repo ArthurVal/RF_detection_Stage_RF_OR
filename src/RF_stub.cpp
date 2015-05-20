@@ -57,15 +57,15 @@ void RF_stub::getDataUART()
 	for(int i = 0 ; i < (data_uart_spherical_RF.n) ; ++i){ 
 			//For all detection :
 
-		rStub = 2 /*- sin(ros::Time::now().toSec() + 2*i)*/;
-		phiStub = 0 + 45 * cos(ros::Time::now().toSec() + 2*i);
-		if(phiStub < 0){
-			while(phiStub < 0){
+		rStub = 2 - sin(ros::Time::now().toSec() + 2*i);
+		phiStub = 0 + 45 * cos(ros::Time::now().toSec() + 0.5*i);
+		if(phiStub < -180){
+			while(phiStub < -180){
 				phiStub += 360;
 			}
 		}
-		if(phiStub > 360){
-			while(phiStub > 360){
+		if(phiStub > 180){
+			while(phiStub > 180){
 				phiStub -= 360;
 			}
 		}
@@ -81,7 +81,7 @@ void RF_stub::getDataUART()
 		data_uart_spherical_RF.theta[i] = thetaStub;
 
 				//Intensity map
-		double sigma = rStub/10; // Ecart type entre 0.1 et 0.3 degres
+		double sigma = rStub/2; // Ecart type entre 0.5 et 1.5 degres
 
 		for(int j = 0 ; j < SIZE_DATA_RF ; ++j){
 			data_intensity_map_RF.intensity[j] = data_intensity_map_RF.intensity[j] + (1.0/(sigma * sqrt(2*M_PI))) *

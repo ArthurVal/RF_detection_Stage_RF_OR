@@ -1,5 +1,6 @@
 Header header
 
-uint64 index
-float64[] phi
-float64[] intensity
+uint32 index
+uint32 size_data
+float32[] phi
+float32[] intensity
