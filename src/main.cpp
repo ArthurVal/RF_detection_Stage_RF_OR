@@ -62,7 +62,7 @@ int main(int argc, char *argv[]){
 	ros::Publisher chatter_pub_gauss = r.advertise<rf_riddle::RF>("rf_riddle_intensity_map", 100 );
 
 	RF_detection *detector;
-	ros::Rate loop_rate(1);
+	ros::Rate loop_rate(10);
 	if(stub){
 		detector = new RF_stub(&chatter_pub_line_rviz, 
 														&chatter_pub_gauss,
