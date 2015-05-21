@@ -110,7 +110,7 @@ int RF_detection::updateRF()
 		text_rf[i].id = 1;
 	
 		if(thetaDisable)
-			detect_rf[i].type = visualization_msgs::Marker::LINE_LIST;
+			detect_rf[i].type = visualization_msgs::Marker::LINE_STRIP;
 		else
 			detect_rf[i].type = visualization_msgs::Marker::POINTS;
 
@@ -121,7 +121,7 @@ int RF_detection::updateRF()
 		detect_rf[i].pose.orientation.w = text_rf[i].pose.orientation.w = 1.0;
 		
 			//Scaling
-		detect_rf[i].scale.x = 0.05;
+		detect_rf[i].scale.x = 0.02;
 		text_rf[i].scale.z = 0.07;
 
 			//Color
@@ -139,7 +139,7 @@ int RF_detection::updateRF()
 
 		if(thetaDisable){
 
-				//Creating a line, require 2 point
+/*				//Creating a line list, require 2 point
 			p.x = data_uart_cartesian_camera.x[i];
 			p.y = data_uart_cartesian_camera.y[i] ;
 			p.z = data_uart_cartesian_camera.z[i] + 1;
@@ -149,6 +149,24 @@ int RF_detection::updateRF()
 			p.y = data_uart_cartesian_camera.y[i];
 			p.z = data_uart_cartesian_camera.z[i] - 1;
 			detect_rf[i].points.push_back(p);
+*/
+				//Creating a line strip (curve) with R = constant & Theta [90-45 ; 90+45]			
+			double init_theta_store;
+			init_theta_store = data_uart_spherical_RF.theta[i];
+
+			for(int k = 45; k <= 135; ++k){
+				data_uart_spherical_RF.theta[i] = (k) ; 
+				this->convToCart();
+				this->convToCam();			
+				p.x = data_uart_cartesian_camera.x[i];
+				p.y = data_uart_cartesian_camera.y[i];
+				p.z = data_uart_cartesian_camera.z[i];
+				detect_rf[i].points.push_back(p);
+			}
+
+			data_uart_spherical_RF.theta[i] = init_theta_store;
+			this->convToCart();
+			this->convToCam();
 
 		}else{
 			p.x = data_uart_cartesian_camera.x[i];
@@ -168,7 +186,7 @@ int RF_detection::updateRF()
 		text_rf[i].text = textOutput.str();
 
 			//Publish to ROS
-		detect_rf[i].lifetime = text_rf[i].lifetime = ros::Duration(3);
+		detect_rf[i].lifetime = text_rf[i].lifetime = ros::Duration(2);
 	
 
 
@@ -187,6 +205,7 @@ int RF_detection::updateRF()
 
 	intensity_map_rf.index = data_intensity_map_RF.index;
 	intensity_map_rf.sizeData = SIZE_DATA_RF;	
+
 	for(int i = 0 ; i < SIZE_DATA_RF ; ++i){
 		intensity_map_rf.phi.push_back(data_intensity_map_RF.phi[i]);
 		intensity_map_rf.intensity.push_back(data_intensity_map_RF.intensity[i]);
