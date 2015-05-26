@@ -4,6 +4,7 @@
 #include "ros/ros.h"
 #include "ros/node_handle.h"
 #include "rf_riddle/RF.h"
+#include "rf_riddle/RFBase.h"
 #include <visualization_msgs/Marker.h>
 
 #include <sstream>
@@ -31,7 +32,7 @@ typedef struct {
 
 typedef struct {
 	unsigned int index;	
-	double phi[SIZE_DATA_RF], intensity[SIZE_DATA_RF];		
+	double angle[SIZE_DATA_RF], intensity[SIZE_DATA_RF];		
 } rf_intensity_map; 
 
 class RF_detection 
@@ -45,7 +46,8 @@ class RF_detection
 		rf_detection_spherical data_uart_spherical_camera;
 		rf_detection_cartesian data_uart_cartesian_camera;
 
-		rf_intensity_map data_intensity_map_RF;
+		rf_intensity_map data_intensity_map_RF_phi;
+		rf_intensity_map data_intensity_map_RF_theta;
 
 		ros::Publisher* chatter_pub_line_rviz;
 		ros::Publisher* chatter_pub_gauss;

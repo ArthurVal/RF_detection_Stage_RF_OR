@@ -23,11 +23,25 @@ RF_detection::RF_detection(ros::Publisher* chatter_line_rviz, ros::Publisher* ch
 	data_uart_cartesian_camera.n = 0;
 	data_uart_cartesian_RF.n = 0;
 	
-	data_intensity_map_RF.index = 0;
+	data_intensity_map_RF_phi.index = data_intensity_map_RF_theta.index = 0;
 	for(int i = 0 ; i < SIZE_DATA_RF ; ++i){
-		data_intensity_map_RF.intensity[i] = 0;
-		data_intensity_map_RF.phi[i] = i * (360.0/SIZE_DATA_RF) - 180;	
+			//angle = [-180->180]
+		data_intensity_map_RF_phi.intensity[i] = 0;
+		data_intensity_map_RF_phi.angle[i] = i * (360.0/SIZE_DATA_RF) - 180;
+
+		if(i < (SIZE_DATA_RF/2)){	
+				//angle = [0->180]		
+			data_intensity_map_RF_theta.intensity[i] = 0;
+			data_intensity_map_RF_theta.angle[i] = i * (180/(SIZE_DATA_RF/2));
+		}
 	}	
+/*
+	data_intensity_map_RF_theta.index = 0;
+	for(int i = 0 ; i < (SIZE_DATA_RF/2) ; ++i){
+		data_intensity_map_RF_theta.intensity[i] = 0;
+		data_intensity_map_RF_theta.angle[i] = i;	
+	}	
+*/
 
 	M_basis[0][0] = 1;
 	M_basis[0][1] = 0;
@@ -187,9 +201,6 @@ int RF_detection::updateRF()
 
 			//Publish to ROS
 		detect_rf[i].lifetime = text_rf[i].lifetime = ros::Duration(2);
-	
-
-
 
 		if(chatter_pub_line_rviz){
 			chatter_pub_line_rviz->publish(detect_rf[i]);
@@ -201,19 +212,36 @@ int RF_detection::updateRF()
 	}// for n_detection
 
 		//Msg of the intensity map for the GUI
+	rf_riddle::RFBase intensity_map_rf_phi;
+	rf_riddle::RFBase intensity_map_rf_theta;
 	rf_riddle::RF intensity_map_rf;
 
-	intensity_map_rf.index = data_intensity_map_RF.index;
-	intensity_map_rf.sizeData = SIZE_DATA_RF;	
+	intensity_map_rf_phi.angleID = true;	
+	intensity_map_rf_theta.angleID = false;	
 
-	for(int i = 0 ; i < SIZE_DATA_RF ; ++i){
-		intensity_map_rf.phi.push_back(data_intensity_map_RF.phi[i]);
-		intensity_map_rf.intensity.push_back(data_intensity_map_RF.intensity[i]);
+	intensity_map_rf_phi.enable = true;	
+	intensity_map_rf_theta.enable = !(thetaDisable);	
+
+	intensity_map_rf_phi.sizeData = SIZE_DATA_RF;	
+	intensity_map_rf_theta.sizeData = (SIZE_DATA_RF/2);	
+
+	for(int i = 0 ; i < intensity_map_rf_phi.sizeData ; ++i){
+		intensity_map_rf_phi.angle.push_back(data_intensity_map_RF_phi.angle[i]);
+		intensity_map_rf_phi.intensity.push_back(data_intensity_map_RF_phi.intensity[i]);
 	}
 
-	if(chatter_pub_gauss)
+	for(int i = 0 ; i < intensity_map_rf_theta.sizeData ; ++i){
+		intensity_map_rf_theta.angle.push_back(data_intensity_map_RF_theta.angle[i]);
+		intensity_map_rf_theta.intensity.push_back(data_intensity_map_RF_theta.intensity[i]);
+	}
+
+	intensity_map_rf.index = data_intensity_map_RF_phi.index;
+	intensity_map_rf.rfData.push_back(intensity_map_rf_phi);
+	intensity_map_rf.rfData.push_back(intensity_map_rf_theta);
+
+	if(chatter_pub_gauss){
 		chatter_pub_gauss->publish(intensity_map_rf);
-	
+	}
 	
 	if(verbose)
 		printOutput();
