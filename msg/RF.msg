@@ -1,6 +1,7 @@
 Header header
 
+#Index of the message
 uint32 index
-uint32 sizeData
-float32[] phi
-float32[] intensity
+
+#Vector of data (one for phi, one for theta)
+RFBase[] rfData
