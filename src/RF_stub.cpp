@@ -46,7 +46,7 @@ void RF_stub::getDataUART()
 { 
 
 	if((iter%100) == 0) //Every 20 iteration, new nStub
-		nStub = rand() % 6; //0 -> 5 detections
+		nStub = (rand() % 7); //0 -> 6 detections
 
 	data_uart_spherical_RF.n = nStub;
 
@@ -55,7 +55,10 @@ void RF_stub::getDataUART()
 	for(int j = 0 ; j < SIZE_DATA_RF ; ++j)
 		data_intensity_map_RF.intensity[j] = 0;
 
-	for(int i = 0 ; i < (data_uart_spherical_RF.n) ; ++i){ 
+/*	if(data_uart_spherical_RF.n <= 0)
+		return;
+*/	
+	for(int i = 0 ; i < (data_uart_spherical_RF.n) ; ++i){
 			//For all detection :
 
 		rStub = 2 - sin(ros::Time::now().toSec() + 2*i);
