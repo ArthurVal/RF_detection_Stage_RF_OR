@@ -10,3 +10,10 @@ uint32 sizeData
 #Datas : Angle & Intensity detected
 float32[] angle
 float32[] intensity
+
+#Datas : Specific data (points detected with coordinates in RF & camera space)
+uint32 numberPointDetected 
+
+	#RF space coordinate
+float32[] anglePointRF
+float32[] distancePointRF 	 

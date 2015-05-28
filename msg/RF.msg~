@@ -4,4 +4,4 @@ Header header
 uint32 index
 
 #Vector of data (one for phi, one for theta)
-RFBase rfData[]
+RFBase[] rfData

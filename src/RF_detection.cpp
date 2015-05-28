@@ -37,28 +37,39 @@ RF_detection::RF_detection(ros::Publisher* chatter_line_rviz, ros::Publisher* ch
 		}
 	}	
 
-	M_basis[0][0] = 1;
-	M_basis[0][1] = 0;
-	M_basis[0][2] = 0;
+	M_basis_R[0][0] = 1;
+	M_basis_R[0][1] = 0;
+	M_basis_R[0][2] = 0;
 
-	M_basis[0][3] = 0; //T : x
+	M_basis_R[1][0] = 0;
+	M_basis_R[1][1] = 1;
+	M_basis_R[1][2] = 0;
 
-	M_basis[1][0] = 0;
-	M_basis[1][1] = 1;
-	M_basis[1][2] = 0;
+	M_basis_R[2][0] = 0;
+	M_basis_R[2][1] = 0;
+	M_basis_R[2][2] = 1;
 
-	M_basis[1][3] = 0; //T : y
+	M_basis_T[0] = 0; //T : x
+	M_basis_T[1] = 0; //T : y
+	M_basis_T[2] = 0; //T : z
 
-	M_basis[2][0] = 0;
-	M_basis[2][1] = 0;
-	M_basis[2][2] = 1;
+	this->RotToQuaternion((double*)M_basis_R, (double*)Quaternion);
 
-	M_basis[2][3] = 0; //T : z
-
-	ROS_INFO("[RF node] Matrix (RT) corresponding to the change of basis (RF -> Camera):");
-	ROS_INFO("%f  %f  %f  %f",M_basis[0][0],M_basis[0][1],M_basis[0][2],M_basis[0][3]);
-	ROS_INFO("%f  %f  %f  %f",M_basis[1][0],M_basis[1][1],M_basis[1][2],M_basis[1][3]);
-	ROS_INFO("%f  %f  %f  %f",M_basis[2][0],M_basis[2][1],M_basis[2][2],M_basis[2][3]);
+	ROS_INFO("[RF node] Matrix (R & T) corresponding to the change of basis (RF -> Camera):");
+	ROS_INFO(" -Rotation: ");
+	ROS_INFO("  -->Matrix: ");
+	ROS_INFO("%f  %f  %f",M_basis_R[0][0],M_basis_R[0][1],M_basis_R[0][2]);
+	ROS_INFO("%f  %f  %f",M_basis_R[1][0],M_basis_R[1][1],M_basis_R[1][2]);
+	ROS_INFO("%f  %f  %f",M_basis_R[2][0],M_basis_R[2][1],M_basis_R[2][2]);
+	ROS_INFO("  -->Quaternion: ");
+	ROS_INFO("%f",Quaternion[0]);
+	ROS_INFO("%f",Quaternion[1]);
+	ROS_INFO("%f",Quaternion[2]);
+	ROS_INFO("%f",Quaternion[3]);
+	ROS_INFO(" -Translation: ");
+	ROS_INFO("%f",M_basis_T[0]);
+	ROS_INFO("%f",M_basis_T[1]);
+	ROS_INFO("%f",M_basis_T[2]);
 
 	iter = 0;	
 
@@ -239,7 +250,29 @@ int RF_detection::updateRF()
 		intensity_map_rf_theta.intensity.push_back(data_intensity_map_RF_theta.intensity[i]);
 	}
 
+	intensity_map_rf_phi.numberPointDetected = intensity_map_rf_theta.numberPointDetected = data_uart_cartesian_RF.n;
+	
+	for(int i = 0 ; i < data_uart_cartesian_camera.n ; ++i){
+		intensity_map_rf_phi.anglePointRF.push_back(data_uart_spherical_RF.phi[i]); 
+		intensity_map_rf_phi.distancePointRF.push_back(data_uart_spherical_RF.dist[i]); 
+
+		intensity_map_rf_theta.anglePointRF.push_back(data_uart_spherical_RF.theta[i]); 
+		intensity_map_rf_theta.distancePointRF.push_back(data_uart_spherical_RF.dist[i]); 
+	}
+
 	intensity_map_rf.index = data_intensity_map_RF_phi.index;
+
+	//TODO put transform in RF.msg (RF_CAM_Transform)
+
+	intensity_map_rf.RF_CAM_Transform.translation.x = M_basis_T[0];	
+	intensity_map_rf.RF_CAM_Transform.translation.y = M_basis_T[1];
+	intensity_map_rf.RF_CAM_Transform.translation.z = M_basis_T[2];
+
+	intensity_map_rf.RF_CAM_Transform.rotation.x = Quaternion[0];
+	intensity_map_rf.RF_CAM_Transform.rotation.y = Quaternion[1];
+	intensity_map_rf.RF_CAM_Transform.rotation.z = Quaternion[2];
+	intensity_map_rf.RF_CAM_Transform.rotation.w = Quaternion[3];
+
 	intensity_map_rf.rfData.push_back(intensity_map_rf_phi);
 	intensity_map_rf.rfData.push_back(intensity_map_rf_theta);
 
@@ -306,20 +339,20 @@ void RF_detection::convToCam()
 	for(int i = 0 ; i <= (data_uart_spherical_RF.n-1) ; ++i){
 
 			//Transform
-		data_uart_cartesian_camera.x[i] = data_uart_cartesian_RF.x[i]*M_basis[0][0] 
-																		+ data_uart_cartesian_RF.y[i]*M_basis[0][1]
-																		+ data_uart_cartesian_RF.z[i]*M_basis[0][2]
-																		+ M_basis[0][3];
+		data_uart_cartesian_camera.x[i] = data_uart_cartesian_RF.x[i]*M_basis_R[0][0] 
+																		+ data_uart_cartesian_RF.y[i]*M_basis_R[0][1]
+																		+ data_uart_cartesian_RF.z[i]*M_basis_R[0][2]
+																		+ M_basis_T[0];
 
-		data_uart_cartesian_camera.y[i] = data_uart_cartesian_RF.x[i]*M_basis[1][0] 
-																		+ data_uart_cartesian_RF.y[i]*M_basis[1][1]
-																		+ data_uart_cartesian_RF.z[i]*M_basis[1][2]
-																		+ M_basis[1][3];
+		data_uart_cartesian_camera.y[i] = data_uart_cartesian_RF.x[i]*M_basis_R[1][0] 
+																		+ data_uart_cartesian_RF.y[i]*M_basis_R[1][1]
+																		+ data_uart_cartesian_RF.z[i]*M_basis_R[1][2]
+																		+ M_basis_T[1];
 
-		data_uart_cartesian_camera.z[i] = data_uart_cartesian_RF.x[i]*M_basis[2][0] 
-																		+ data_uart_cartesian_RF.y[i]*M_basis[2][1]
-																		+ data_uart_cartesian_RF.z[i]*M_basis[2][2]
-																		+ M_basis[2][3];
+		data_uart_cartesian_camera.z[i] = data_uart_cartesian_RF.x[i]*M_basis_R[2][0] 
+																		+ data_uart_cartesian_RF.y[i]*M_basis_R[2][1]
+																		+ data_uart_cartesian_RF.z[i]*M_basis_R[2][2]
+																		+ M_basis_T[2];
 
 
 				//Spherical Update
@@ -337,8 +370,89 @@ void RF_detection::convToCam()
 	}	
 }
 
+/*=================================================================================*/
+/*-----------------		 RF_detection::RotToQuaternion()		-------------------------*/
+/*------------ Conversion from Rot Matrix to quaternion vector --------------------*/
+/*=================================================================================*/
+void RF_detection::RotToQuaternion(double* in_RotMatrix, double* out_QuaterVector)
+{
+	// Code find here : http://www.euclideanspace.com/maths/geometry/rotations/conversions/matrixToQuaternion/
+	for(int i = 0 ; i < 4 ; ++i)
+		*(out_QuaterVector+i) = 0;
 
 
+		//--------------------- IF Method ----------------------------------
+/*
+	double trace = *(in_RotMatrix) + *(in_RotMatrix + 4) + *(in_RotMatrix + 8);
+	if(trace > 0){
+		double s = 0.5f / sqrt(trace + 1.0f);
+		*(out_QuaterVector)   = (*(in_RotMatrix + 7) - *(in_RotMatrix + 5)) * s; 	//x 
+		*(out_QuaterVector+1) = (*(in_RotMatrix + 2) - *(in_RotMatrix + 6)) * s; 	//y 
+		*(out_QuaterVector+2) = (*(in_RotMatrix + 3) - *(in_RotMatrix + 1)) * s; 	//z 
+		*(out_QuaterVector+3) = 0.25f / s; 																				//w 
+	}else{
+		if( (*(in_RotMatrix) > *(in_RotMatrix + 4)) && (*(in_RotMatrix) > *(in_RotMatrix + 8)) ){
+			double s = 0.2f * sqrt(1.0f + *(in_RotMatrix) - *(in_RotMatrix + 4) - *(in_RotMatrix + 8));
+			*(out_QuaterVector)   = 0.25f * s; 																				//x 
+			*(out_QuaterVector+1) = (*(in_RotMatrix + 1) + *(in_RotMatrix + 3)) / s; 	//y 
+			*(out_QuaterVector+2) = (*(in_RotMatrix + 2) + *(in_RotMatrix + 6)) / s; 	//z 
+			*(out_QuaterVector+3) = (*(in_RotMatrix + 7) + *(in_RotMatrix + 5)) / s; 	//w 
+		}else{
+			if((*(in_RotMatrix + 4) > *(in_RotMatrix + 8))){
+				double s = 0.2f * sqrt(1.0f + *(in_RotMatrix + 4) - *(in_RotMatrix) - *(in_RotMatrix + 8));
+				*(out_QuaterVector)   = (*(in_RotMatrix + 1) + *(in_RotMatrix + 3)) / s;	//x 
+				*(out_QuaterVector+1) = 0.25f * s; 																				//y 
+				*(out_QuaterVector+2) = (*(in_RotMatrix + 2) + *(in_RotMatrix + 6)) / s; 	//z 
+				*(out_QuaterVector+3) = (*(in_RotMatrix + 7) + *(in_RotMatrix + 5)) / s; 	//w 
+			}else{
+				double s = 0.2f * sqrt(1.0f + *(in_RotMatrix + 8) - *(in_RotMatrix) - *(in_RotMatrix + 4));
+				*(out_QuaterVector)   = (*(in_RotMatrix + 2) + *(in_RotMatrix + 6)) / s;	//x 
+				*(out_QuaterVector+1) = (*(in_RotMatrix + 7) + *(in_RotMatrix + 5)) / s; 	//y 
+				*(out_QuaterVector+2) = 0.25f * s; 																				//z 
+				*(out_QuaterVector+3) = (*(in_RotMatrix + 1) + *(in_RotMatrix + 3)) / s; 	//w 				
+			}
+		}		
+	}
+*/
+		//--------------------- copySign() Method ----------------------------
+	*(out_QuaterVector)   = sqrt(std::max(0.00 , 1 + *(in_RotMatrix) - *(in_RotMatrix + 4) - *(in_RotMatrix + 8))) / 2;	//x 
+	*(out_QuaterVector+1) = sqrt(std::max(0.00 , 1 - *(in_RotMatrix) + *(in_RotMatrix + 4) - *(in_RotMatrix + 8))) / 2;	//y 
+	*(out_QuaterVector+2) = sqrt(std::max(0.00 , 1 - *(in_RotMatrix) - *(in_RotMatrix + 4) + *(in_RotMatrix + 8))) / 2;	//z 
+	*(out_QuaterVector+3) = sqrt(std::max(0.00 , 1 + *(in_RotMatrix) + *(in_RotMatrix + 4) + *(in_RotMatrix + 8))) / 2;	//w 
+
+	*(out_QuaterVector)   = copysign(*(out_QuaterVector),   *(in_RotMatrix + 7) - *(in_RotMatrix + 5));	//x 
+	*(out_QuaterVector+1) = copysign(*(out_QuaterVector+1), *(in_RotMatrix + 2) - *(in_RotMatrix + 6));	//y 
+	*(out_QuaterVector+2) = copysign(*(out_QuaterVector+2), *(in_RotMatrix + 3) - *(in_RotMatrix + 1));	//z 			
+}
+
+/*=================================================================================*/
+/*-----------------		 RF_detection::QuaternionToRot()		-------------------------*/
+/*------------ Conversion from Quaternion vector to Rot matrix --------------------*/
+/*=================================================================================*/
+
+void RF_detection::QuaternionToRot(double* out_RotMatrix, double* in_QuaterVector)
+{
+	// Explanation find here : http://fr.wikipedia.org/wiki/Quaternions_et_rotation_dans_l%27espace#D.27un_quaternion_en_matrice_orthogonale
+	// in_QuaterVector    => x => b
+	// in_QuaterVector+1  => y => c
+	// in_QuaterVector+2  => z => d
+	// in_QuaterVector+3  => w => a
+
+	for(int i = 0 ; i < 9 ; ++i)
+		*(out_RotMatrix+i) = 0;
+
+	*(out_RotMatrix)   = pow(*(in_QuaterVector+3),2.0) + pow(*(in_QuaterVector),2.0) - pow(*(in_QuaterVector+1),2.0) - pow(*(in_QuaterVector+2),2.0);
+	*(out_RotMatrix+1) = 2 * (*(in_QuaterVector)) * (*(in_QuaterVector+1)) - 2 * (*(in_QuaterVector+3)) * (*(in_QuaterVector+2));
+	*(out_RotMatrix+2) = 2 * (*(in_QuaterVector+3)) * (*(in_QuaterVector+1)) + 2 * (*(in_QuaterVector)) * (*(in_QuaterVector+2));
+
+	*(out_RotMatrix+3) = 2 * (*(in_QuaterVector+3)) * (*(in_QuaterVector+2)) + 2 * (*(in_QuaterVector)) * (*(in_QuaterVector+1));
+	*(out_RotMatrix+4) = pow(*(in_QuaterVector+3),2.0) - pow(*(in_QuaterVector),2.0) + pow(*(in_QuaterVector+1),2.0) - pow(*(in_QuaterVector+2),2.0);
+	*(out_RotMatrix+5) = 2 * (*(in_QuaterVector+1)) * (*(in_QuaterVector+2)) - 2 * (*(in_QuaterVector+3)) * (*(in_QuaterVector));
+
+	*(out_RotMatrix+6) = 2 * (*(in_QuaterVector)) * (*(in_QuaterVector+2)) - 2 * (*(in_QuaterVector+3)) * (*(in_QuaterVector+1));
+	*(out_RotMatrix+7) = 2 * (*(in_QuaterVector+3)) * (*(in_QuaterVector)) + 2 * (*(in_QuaterVector+1)) * (*(in_QuaterVector+2));
+	*(out_RotMatrix+8) = pow(*(in_QuaterVector+3),2.0) - pow(*(in_QuaterVector),2.0) - pow(*(in_QuaterVector+1),2.0) + pow(*(in_QuaterVector+2),2.0);
+}
 
 
 
