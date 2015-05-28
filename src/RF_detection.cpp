@@ -9,12 +9,13 @@ RF_detection::RF_detection(ros::Publisher* chatter_line_rviz, ros::Publisher* ch
 	chatter_pub_line_rviz = chatter_line_rviz;
 	chatter_pub_gauss = chatter_gauss;
 
-		//Set to default (May be changed in parseArgument)
+		//Set to default (May be changed in parseArgument of main.cpp)
 	thetaDisable = thetadis;
 	verbose = print;
 
 	if(verbose)
 		ROS_INFO("[RF node] Verbose activated");
+
 	if(thetaDisable)
 		ROS_INFO("[RF node] 2D RF data Acquisition");
 
@@ -35,33 +36,26 @@ RF_detection::RF_detection(ros::Publisher* chatter_line_rviz, ros::Publisher* ch
 			data_intensity_map_RF_theta.angle[i] = i * (180/(SIZE_DATA_RF/2));
 		}
 	}	
-/*
-	data_intensity_map_RF_theta.index = 0;
-	for(int i = 0 ; i < (SIZE_DATA_RF/2) ; ++i){
-		data_intensity_map_RF_theta.intensity[i] = 0;
-		data_intensity_map_RF_theta.angle[i] = i;	
-	}	
-*/
 
 	M_basis[0][0] = 1;
 	M_basis[0][1] = 0;
 	M_basis[0][2] = 0;
 
-	M_basis[0][3] = 0;
+	M_basis[0][3] = 0; //T : x
 
 	M_basis[1][0] = 0;
 	M_basis[1][1] = 1;
 	M_basis[1][2] = 0;
 
-	M_basis[1][3] = 0;
+	M_basis[1][3] = 0; //T : y
 
 	M_basis[2][0] = 0;
 	M_basis[2][1] = 0;
 	M_basis[2][2] = 1;
 
-	M_basis[2][3] = 0;
+	M_basis[2][3] = 0; //T : z
 
-	ROS_INFO("[RF node] Matrix corresponding to the change of basis (RF -> Camera):");
+	ROS_INFO("[RF node] Matrix (RT) corresponding to the change of basis (RF -> Camera):");
 	ROS_INFO("%f  %f  %f  %f",M_basis[0][0],M_basis[0][1],M_basis[0][2],M_basis[0][3]);
 	ROS_INFO("%f  %f  %f  %f",M_basis[1][0],M_basis[1][1],M_basis[1][2],M_basis[1][3]);
 	ROS_INFO("%f  %f  %f  %f",M_basis[2][0],M_basis[2][1],M_basis[2][2],M_basis[2][3]);
@@ -77,35 +71,36 @@ RF_detection::RF_detection(ros::Publisher* chatter_line_rviz, ros::Publisher* ch
 
 int RF_detection::updateRF()
 {
-		//============//
+		//=================//
 		// Algo updateRF() //
-		//============//
+		//=================//
 
-		//Récuperation valeur I, Q & Theta
-		//Conversion I,Q => dist
-		//Application changement référenciel RF => référenciel camera
+		//Get RF data from the system with UART
+		//Referential change (RF => camera)
 		//Update msg & publish to rostopic
 	
 		//Get the UART data from RF detection
 	getDataUART();
 
+		//Debug purpose (switch to ROS_INFO to enable it)
+	ROS_DEBUG("---------------------------------------");
+  ROS_DEBUG("Iter %d | Detection RF : %d detection", iter, data_uart_spherical_camera.n);
+
+		//If no detection stop
 	if(data_uart_spherical_RF.n == 0){
 		return 0;
 	}
+
 		//Convert data to cartesian coordinates	
 	this->convToCart();
 
 		//Convert to the camera referential
 	this->convToCam();
 
-	if(true){
-		ROS_INFO("---------------------------------------");
-  	ROS_INFO("Iter %d | Detection RF : %d detection", iter, data_uart_spherical_camera.n);
-	}
-
-			//Msg rviz detection initialization
+		//ROS Msg creation
+			//Msg rviz detection ()
 	visualization_msgs::Marker detect_rf[N_RF_MAX];
-			//Msg rviz TEXT (attached to the line) initialization
+			//Msg rviz TEXT (attached to the line)
 	visualization_msgs::Marker text_rf[N_RF_MAX];
 
 
@@ -113,16 +108,19 @@ int RF_detection::updateRF()
 		//For all marker detect by the RF do :
 
 			//Initialization of outputs
-		detect_rf[i].header.frame_id = text_rf[i].header.frame_id = "/camera_depth_frame";
+		detect_rf[i].header.frame_id = text_rf[i].header.frame_id = "/camera_rgb_frame";
 		detect_rf[i].header.stamp = text_rf[i].header.stamp = ros::Time::now();
 
+
+			//ns & ID correspond to an unique identifier
 		std::ostringstream ID;
 		ID << "RF_detection_" << i;
 		detect_rf[i].ns = text_rf[i].ns = ID.str();
 
 		detect_rf[i].id = 0;
 		text_rf[i].id = 1;
-	
+
+			//If theta disable then plot a curve at 90 degrees +- 45 degrees	
 		if(thetaDisable)
 			detect_rf[i].type = visualization_msgs::Marker::LINE_STRIP;
 		else
@@ -152,7 +150,6 @@ int RF_detection::updateRF()
 		geometry_msgs::Point p;
 
 		if(thetaDisable){
-
 /*				//Creating a line list, require 2 point
 			p.x = data_uart_cartesian_camera.x[i];
 			p.y = data_uart_cartesian_camera.y[i] ;
@@ -166,18 +163,22 @@ int RF_detection::updateRF()
 */
 				//Creating a line strip (curve) with R = constant & Theta [90-45 ; 90+45]			
 			double init_theta_store;
+				//Store theta
 			init_theta_store = data_uart_spherical_RF.theta[i];
 
 			for(int k = 45; k <= 135; ++k){
+					//For theta = 45 to 135 degrees
 				data_uart_spherical_RF.theta[i] = (k) ; 
+					//Compute new coordinates
 				this->convToCart();
-				this->convToCam();			
+				this->convToCam();
+					//Add point with coordinate to the line			
 				p.x = data_uart_cartesian_camera.x[i];
 				p.y = data_uart_cartesian_camera.y[i];
 				p.z = data_uart_cartesian_camera.z[i];
 				detect_rf[i].points.push_back(p);
 			}
-
+				//Restore previous theta
 			data_uart_spherical_RF.theta[i] = init_theta_store;
 			this->convToCart();
 			this->convToCam();
@@ -199,37 +200,40 @@ int RF_detection::updateRF()
 
 		text_rf[i].text = textOutput.str();
 
-			//Publish to ROS
-		detect_rf[i].lifetime = text_rf[i].lifetime = ros::Duration(2);
+			//lifetime of the marker (time it will appears on the rviz frame)
+		detect_rf[i].lifetime = text_rf[i].lifetime = ros::Duration(2); //time in sec
 
 		if(chatter_pub_line_rviz){
 			chatter_pub_line_rviz->publish(detect_rf[i]);
 			chatter_pub_line_rviz->publish(text_rf[i]);
 		}
-	
-
-
 	}// for n_detection
 
-		//Msg of the intensity map for the GUI
+		
+		//Intensity map of the RF (GUI plotting data)
 	rf_riddle::RFBase intensity_map_rf_phi;
 	rf_riddle::RFBase intensity_map_rf_theta;
 	rf_riddle::RF intensity_map_rf;
 
+		//ID (true = phi / flase = theta)
 	intensity_map_rf_phi.angleID = true;	
 	intensity_map_rf_theta.angleID = false;	
-
+		//To indicate if it is enable (currently not use)
 	intensity_map_rf_phi.enable = true;	
 	intensity_map_rf_theta.enable = !(thetaDisable);	
 
+		//Size of the array send to the GUI
 	intensity_map_rf_phi.sizeData = SIZE_DATA_RF;	
 	intensity_map_rf_theta.sizeData = (SIZE_DATA_RF/2);	
 
+
+		//Phi data
 	for(int i = 0 ; i < intensity_map_rf_phi.sizeData ; ++i){
 		intensity_map_rf_phi.angle.push_back(data_intensity_map_RF_phi.angle[i]);
 		intensity_map_rf_phi.intensity.push_back(data_intensity_map_RF_phi.intensity[i]);
 	}
 
+		//Theta Data
 	for(int i = 0 ; i < intensity_map_rf_theta.sizeData ; ++i){
 		intensity_map_rf_theta.angle.push_back(data_intensity_map_RF_theta.angle[i]);
 		intensity_map_rf_theta.intensity.push_back(data_intensity_map_RF_theta.intensity[i]);
@@ -301,7 +305,7 @@ void RF_detection::convToCam()
 
 	for(int i = 0 ; i <= (data_uart_spherical_RF.n-1) ; ++i){
 
-			//Transform (TODO : Determiner la matrice de passage d'un referentiel à l'autre via le calibrage)
+			//Transform
 		data_uart_cartesian_camera.x[i] = data_uart_cartesian_RF.x[i]*M_basis[0][0] 
 																		+ data_uart_cartesian_RF.y[i]*M_basis[0][1]
 																		+ data_uart_cartesian_RF.z[i]*M_basis[0][2]
