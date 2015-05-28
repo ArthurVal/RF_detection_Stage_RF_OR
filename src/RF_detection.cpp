@@ -93,9 +93,9 @@ int RF_detection::updateRF()
 		//Get the UART data from RF detection
 	getDataUART();
 
-		//Debug purpose (switch to ROS_INFO to enable it)
-	ROS_DEBUG("---------------------------------------");
-  ROS_DEBUG("Iter %d | Detection RF : %d detection", iter, data_uart_spherical_camera.n);
+		//Debug purpose (can be disable)
+	ROS_INFO("---------------------------------------");
+  ROS_INFO("Iter %d | Detection RF : %d detection", iter, data_uart_spherical_camera.n);
 
 		//If no detection stop
 	if(data_uart_spherical_RF.n == 0){
@@ -229,6 +229,7 @@ int RF_detection::updateRF()
 		//ID (true = phi / flase = theta)
 	intensity_map_rf_phi.angleID = true;	
 	intensity_map_rf_theta.angleID = false;	
+
 		//To indicate if it is enable (currently not use)
 	intensity_map_rf_phi.enable = true;	
 	intensity_map_rf_theta.enable = !(thetaDisable);	
@@ -251,7 +252,7 @@ int RF_detection::updateRF()
 	}
 
 	intensity_map_rf_phi.numberPointDetected = intensity_map_rf_theta.numberPointDetected = data_uart_cartesian_RF.n;
-	
+		//Points detected
 	for(int i = 0 ; i < data_uart_cartesian_camera.n ; ++i){
 		intensity_map_rf_phi.anglePointRF.push_back(data_uart_spherical_RF.phi[i]); 
 		intensity_map_rf_phi.distancePointRF.push_back(data_uart_spherical_RF.dist[i]); 
@@ -261,8 +262,6 @@ int RF_detection::updateRF()
 	}
 
 	intensity_map_rf.index = data_intensity_map_RF_phi.index;
-
-	//TODO put transform in RF.msg (RF_CAM_Transform)
 
 	intensity_map_rf.RF_CAM_Transform.translation.x = M_basis_T[0];	
 	intensity_map_rf.RF_CAM_Transform.translation.y = M_basis_T[1];
