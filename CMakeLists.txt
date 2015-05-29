@@ -9,6 +9,7 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   rviz
   std_msgs
+	geometry_msgs
 	message_generation
 )
 
@@ -69,6 +70,7 @@ find_package(catkin REQUIRED COMPONENTS
 # Generate added messages and services with any dependencies listed here
  generate_messages(
    DEPENDENCIES
+	 geometry_msgs
    std_msgs
  )
 
@@ -84,7 +86,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES rf_riddle
-  CATKIN_DEPENDS roscpp rospy rviz std_msgs message_runtime
+  CATKIN_DEPENDS roscpp rospy rviz std_msgs	geometry_msgs message_runtime
   DEPENDS system_lib
 )
 

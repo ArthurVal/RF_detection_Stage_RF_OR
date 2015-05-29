@@ -12,6 +12,7 @@
 #include <cstdlib>
 #include <cstring> 
 #include <cmath>
+#include <algorithm>
 
 #define N_RF_MAX 50
 #define SIZE_DATA_RF 360 //360 Points => 1Pts/Degre
@@ -55,7 +56,9 @@ class RF_detection
 		bool verbose;
 		bool thetaDisable;
 		
-		double M_basis[4][4];
+		double M_basis_R[3][3];
+		double Quaternion[4];
+		double M_basis_T[3];
 
 		unsigned int iter;
 
@@ -65,6 +68,8 @@ class RF_detection
 		virtual void getDataUART();
 		void convToCart();
 		void convToCam();
+		void RotToQuaternion(double* in_RotMatrix, double* out_QuaterVector);
+		void QuaternionToRot(double* out_RotMatrix, double* in_QuaterVector);
 		void printOutput();
 
 	public:

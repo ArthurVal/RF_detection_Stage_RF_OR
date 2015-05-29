@@ -62,7 +62,10 @@ int main(int argc, char *argv[]){
 	ros::Publisher chatter_pub_gauss = r.advertise<rf_riddle::RF>("rf_riddle_intensity_map", 100 );
 
 	RF_detection *detector;
+
+		//Moop rate frequency in Hz (correspond to the publishing frequency of the topic)
 	ros::Rate loop_rate(10);
+
 	if(stub){
 		detector = new RF_stub(&chatter_pub_line_rviz, 
 														&chatter_pub_gauss,
@@ -81,8 +84,7 @@ int main(int argc, char *argv[]){
 	while(ros::ok()){	
 		detector->updateRF();
 		ros::spinOnce();
-		loop_rate.sleep();		
-
+		loop_rate.sleep();
 	}		
 	ROS_INFO("[RF node] ShutDown of node : RF_detection_node");
 	return 0;
