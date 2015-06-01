@@ -46,8 +46,8 @@ void RF_stub::getDataUART()
 	for(int i = 0 ; i < (data_uart_spherical_RF.n) ; ++i){ 
 			//For all detection :
 
-		rStub = 2 - sin(ros::Time::now().toSec() + 2*i);
-		phiStub = 0 + 45 * cos(ros::Time::now().toSec() + 0.5*i);
+		rStub = 2 - sin(0.1*ros::Time::now().toSec() + 2*i);
+		phiStub = 0 + 45 * cos(0.1*ros::Time::now().toSec() + 0.5*i);
 
 		if(phiStub < -180){
 			while(phiStub < -180){
@@ -61,7 +61,7 @@ void RF_stub::getDataUART()
 		}
 
 		if(!thetaDisable){
-			thetaStub = 90 + 45 * sin(ros::Time::now().toSec() + i);
+			thetaStub = 90 + 45 * sin(0.1*ros::Time::now().toSec() + i);
 
 			if(thetaStub < 0){
 				while(thetaStub < 0){
