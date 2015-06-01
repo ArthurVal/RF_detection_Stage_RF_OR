@@ -15,6 +15,18 @@ RF_stub::RF_stub(ros::Publisher* chatter_line_rviz, ros::Publisher* chatter_gaus
 	ROS_INFO("[RF node] Stub mode activated");
 }	
 
+RF_stub::RF_stub(ros::Publisher* chatter_line_rviz, bool thetadis, bool print) 
+: RF_detection(chatter_line_rviz, thetadis, print)
+{	
+	srand (time(NULL));
+	nStub = rand() % 5 + 1; // between 1 & 5 detections
+	phiStub = 0;
+	thetaStub = 90;
+	rStub = 1;
+	ROS_INFO("[RF node] Stub mode activated");
+}	
+
+
 
 /*===================================================================================*/
 /*===================================================================================*/
@@ -33,8 +45,13 @@ RF_stub::RF_stub(ros::Publisher* chatter_line_rviz, ros::Publisher* chatter_gaus
 void RF_stub::getDataUART()
 { 
 
-	if((iter%100) == 0) //Every 20 iteration, new nStub
+	if(((iter%100) == 0) && !isRemote) //Every 20 iteration, new nStub
 		nStub = rand() % 6; //0 -> 5 detections
+	else 
+		if(isRemote)
+			nStub = 1;
+	
+	
 
 	data_uart_spherical_RF.n = nStub;
 
@@ -45,9 +62,13 @@ void RF_stub::getDataUART()
 
 	for(int i = 0 ; i < (data_uart_spherical_RF.n) ; ++i){ 
 			//For all detection :
-
 		rStub = 2 - sin(0.1*ros::Time::now().toSec() + 2*i);
-		phiStub = 0 + 45 * cos(0.1*ros::Time::now().toSec() + 0.5*i);
+
+		if(!isRemote){
+			phiStub = 0 + 45 * cos(0.1*ros::Time::now().toSec() + 0.5*i);
+		}else{
+			phiStub = (minPhi + ((maxPhi - minPhi)/2)) + ((maxPhi - minPhi) / 2) * cos(0.1*ros::Time::now().toSec() + 0.5*i);
+		}
 
 		if(phiStub < -180){
 			while(phiStub < -180){
@@ -61,8 +82,11 @@ void RF_stub::getDataUART()
 		}
 
 		if(!thetaDisable){
-			thetaStub = 90 + 45 * sin(0.1*ros::Time::now().toSec() + i);
-
+			if(!isRemote)
+				thetaStub = 90 - 45 * sin(0.1*ros::Time::now().toSec() + i);
+			else				
+				thetaStub = (minTheta + ((maxTheta - minTheta)/2)) + ((maxTheta - minTheta) / 2) * sin(0.1*ros::Time::now().toSec() + i);
+		
 			if(thetaStub < 0){
 				while(thetaStub < 0){
 					thetaStub += 180;
@@ -73,7 +97,7 @@ void RF_stub::getDataUART()
 					thetaStub -= 180;
 				}
 			}
-		}
+		} //!thetaDisable
 	
 
 			//R

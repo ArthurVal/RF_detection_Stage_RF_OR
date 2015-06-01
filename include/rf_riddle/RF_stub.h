@@ -27,6 +27,10 @@ class RF_stub : public RF_detection
 							bool thetadis = true, 
 							bool print = false);
 
+		RF_stub(	ros::Publisher* chatter_line_rviz = NULL, 
+							bool thetadis = true, 
+							bool print = false);
+
 			//Destructor
 		~RF_stub(){};
 

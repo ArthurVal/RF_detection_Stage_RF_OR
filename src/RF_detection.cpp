@@ -3,10 +3,14 @@
 /*=================================================================================*/
 /*-----------------------		 RF_detection::RF_detection()		-----------------------*/
 /*=================================================================================*/
+/*-----------------------		 Automated constructor (remote = 0)		-----------------------*/
 RF_detection::RF_detection(ros::Publisher* chatter_line_rviz, ros::Publisher* chatter_gauss, bool thetadis, bool print)
 {	
 		
 	chatter_pub_line_rviz = chatter_line_rviz;
+
+	ROS_INFO("[RF node] Automatic mode : 10Hz acquisition");	
+	isRemote = false;
 	chatter_pub_gauss = chatter_gauss;
 
 		//Set to default (May be changed in parseArgument of main.cpp)
@@ -37,50 +41,79 @@ RF_detection::RF_detection(ros::Publisher* chatter_line_rviz, ros::Publisher* ch
 		}
 	}	
 
-	M_basis_R[0][0] = 1;
-	M_basis_R[0][1] = 0;
-	M_basis_R[0][2] = 0;
+	this->initBasisChangeMatrix();
+	
+	minTheta = 0;	
+	maxTheta = 180;
+	minPhi = -180;
+	maxPhi = 180;
 
-	M_basis_R[1][0] = 0;
-	M_basis_R[1][1] = 1;
-	M_basis_R[1][2] = 0;
+	acquisitionTime = 1;
+	nPoint = 360;
+		
+	iter = 0;
+}
 
-	M_basis_R[2][0] = 0;
-	M_basis_R[2][1] = 0;
-	M_basis_R[2][2] = 1;
+/*-----------------------		 Remote constructor (remote = 1)		-----------------------*/
+RF_detection::RF_detection(ros::Publisher* chatter_line_rviz, bool thetadis, bool print)
+{	
+		
+	chatter_pub_line_rviz = chatter_line_rviz;
 
-	M_basis_T[0] = 0; //T : x
-	M_basis_T[1] = 0; //T : y
-	M_basis_T[2] = 0; //T : z
+	ROS_INFO("[RF node] Remote mode : Acquisiiton on demand (Service = rf_riddle_intensity_map)");
+	isRemote = true;
+	chatter_pub_gauss = NULL;
 
-	this->RotToQuaternion((double*)M_basis_R, (double*)Quaternion);
+		//Set to default (May be changed in parseArgument of main.cpp)
+	thetaDisable = thetadis;
+	verbose = print;
 
-	ROS_INFO("[RF node] Matrix (R & T) corresponding to the change of basis (RF -> Camera):");
-	ROS_INFO(" -Rotation: ");
-	ROS_INFO("  -->Matrix: ");
-	ROS_INFO("%f  %f  %f",M_basis_R[0][0],M_basis_R[0][1],M_basis_R[0][2]);
-	ROS_INFO("%f  %f  %f",M_basis_R[1][0],M_basis_R[1][1],M_basis_R[1][2]);
-	ROS_INFO("%f  %f  %f",M_basis_R[2][0],M_basis_R[2][1],M_basis_R[2][2]);
-	ROS_INFO("  -->Quaternion: ");
-	ROS_INFO("%f",Quaternion[0]);
-	ROS_INFO("%f",Quaternion[1]);
-	ROS_INFO("%f",Quaternion[2]);
-	ROS_INFO("%f",Quaternion[3]);
-	ROS_INFO(" -Translation: ");
-	ROS_INFO("%f",M_basis_T[0]);
-	ROS_INFO("%f",M_basis_T[1]);
-	ROS_INFO("%f",M_basis_T[2]);
+	if(verbose)
+		ROS_INFO("[RF node] Verbose activated");
+
+	if(thetaDisable)
+		ROS_INFO("[RF node] 2D RF data Acquisition");
+
+	data_uart_spherical_camera.n = 0;
+	data_uart_spherical_RF.n = 0;	
+	data_uart_cartesian_camera.n = 0;
+	data_uart_cartesian_RF.n = 0;
+	
+	data_intensity_map_RF_phi.index = data_intensity_map_RF_theta.index = 0;
+	for(int i = 0 ; i < SIZE_DATA_RF ; ++i){
+			//angle = [-180->180]
+		data_intensity_map_RF_phi.intensity[i] = 0;
+		data_intensity_map_RF_phi.angle[i] = i * (360.0/SIZE_DATA_RF) - 180;
+
+		if(i < (SIZE_DATA_RF/2)){	
+				//angle = [0->180]		
+			data_intensity_map_RF_theta.intensity[i] = 0;
+			data_intensity_map_RF_theta.angle[i] = i * (180/(SIZE_DATA_RF/2));
+		}
+	}		
+
+	this->initBasisChangeMatrix();
+
+	minTheta = 0;	
+	maxTheta = 180;
+	minPhi = -180;
+	maxPhi = 180;
+
+	acquisitionTime = 1;
+	nPoint = 360;
 
 	iter = 0;	
-
 }
 
 
-/*=================================================================================*/
-/*--------------------------		 RF_detection::run()		---------------------------*/
-/*=================================================================================*/
 
-int RF_detection::updateRF()
+
+/*=====================================================================================*/
+/*--------------------------		 RF_detection::updateRF()		---------------------------*/
+/*=====================================================================================*/
+
+bool RF_detection::updateRF(rf_riddle::getRFData::Request &req,
+														rf_riddle::getRFData::Response &res)
 {
 		//=================//
 		// Algo updateRF() //
@@ -89,7 +122,17 @@ int RF_detection::updateRF()
 		//Get RF data from the system with UART
 		//Referential change (RF => camera)
 		//Update msg & publish to rostopic
-	
+
+
+		//Store setup needed for acquisition
+	if(isRemote){
+		minTheta = req.rfSetupNeeded.thetaMin;
+		maxTheta = req.rfSetupNeeded.thetaMax;
+		minPhi = req.rfSetupNeeded.phiMin;
+		maxPhi = req.rfSetupNeeded.phiMax;
+		acquisitionTime = req.rfSetupNeeded.acquisitionTime;
+		nPoint =  req.rfSetupNeeded.nPoints;
+	}
 		//Get the UART data from RF detection
 	getDataUART();
 
@@ -99,7 +142,7 @@ int RF_detection::updateRF()
 
 		//If no detection stop
 	if(data_uart_spherical_RF.n == 0){
-		return 0;
+		return false;
 	}
 
 		//Convert data to cartesian coordinates	
@@ -212,7 +255,10 @@ int RF_detection::updateRF()
 		text_rf[i].text = textOutput.str();
 
 			//lifetime of the marker (time it will appears on the rviz frame)
-		detect_rf[i].lifetime = text_rf[i].lifetime = ros::Duration(2); //time in sec
+		if(!isRemote)
+			detect_rf[i].lifetime = text_rf[i].lifetime = ros::Duration(2); //time in sec
+		else
+			detect_rf[i].lifetime = text_rf[i].lifetime = ros::Duration(); //time in sec
 
 		if(chatter_pub_line_rviz){
 			chatter_pub_line_rviz->publish(detect_rf[i]);
@@ -275,16 +321,18 @@ int RF_detection::updateRF()
 	intensity_map_rf.rfData.push_back(intensity_map_rf_phi);
 	intensity_map_rf.rfData.push_back(intensity_map_rf_theta);
 
-	if(chatter_pub_gauss){
+	if(chatter_pub_gauss)
 		chatter_pub_gauss->publish(intensity_map_rf);
-	}
+
+	if(isRemote)
+		res.RFOutput = intensity_map_rf;
 	
 	if(verbose)
 		printOutput();
 
 	++iter;
 		
-	return 1;
+	return true;
 }
 
 /*===================================================================================*/
@@ -487,3 +535,49 @@ void RF_detection::printOutput()
 	}
 }
 
+/*===================================================================================*/
+/*===================================================================================*/
+/*================================ Private functions ================================*/
+/*===================================================================================*/
+/*===================================================================================*/
+
+/*=================================================================================*/
+/*-------------		 RF_detection::initBasisChangeMatrix()		-----------------------*/
+/*------------ Initialization of the basis change matrix (RF->Cam) ----------------*/
+/*=================================================================================*/
+void RF_detection::initBasisChangeMatrix()
+{
+	M_basis_R[0][0] = 1;
+	M_basis_R[0][1] = 0;
+	M_basis_R[0][2] = 0;
+
+	M_basis_R[1][0] = 0;
+	M_basis_R[1][1] = 1;
+	M_basis_R[1][2] = 0;
+
+	M_basis_R[2][0] = 0;
+	M_basis_R[2][1] = 0;
+	M_basis_R[2][2] = 1;
+
+	M_basis_T[0] = 0; //T : x
+	M_basis_T[1] = 0; //T : y
+	M_basis_T[2] = 0; //T : z
+
+	this->RotToQuaternion((double*)M_basis_R, (double*)Quaternion);
+
+	ROS_INFO("[RF node] Matrix (R & T) corresponding to the change of basis (RF -> Camera):");
+	ROS_INFO(" -Rotation: ");
+	ROS_INFO("  -->Matrix: ");
+	ROS_INFO("%f  %f  %f",M_basis_R[0][0],M_basis_R[0][1],M_basis_R[0][2]);
+	ROS_INFO("%f  %f  %f",M_basis_R[1][0],M_basis_R[1][1],M_basis_R[1][2]);
+	ROS_INFO("%f  %f  %f",M_basis_R[2][0],M_basis_R[2][1],M_basis_R[2][2]);
+	ROS_INFO("  -->Quaternion: ");
+	ROS_INFO("%f",Quaternion[0]);
+	ROS_INFO("%f",Quaternion[1]);
+	ROS_INFO("%f",Quaternion[2]);
+	ROS_INFO("%f",Quaternion[3]);
+	ROS_INFO(" -Translation: ");
+	ROS_INFO("%f",M_basis_T[0]);
+	ROS_INFO("%f",M_basis_T[1]);
+	ROS_INFO("%f",M_basis_T[2]);
+}

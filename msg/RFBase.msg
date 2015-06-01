@@ -7,11 +7,11 @@ bool enable
 #Size of the data
 uint32 sizeData
 
-#Datas : Angle & Intensity detected
+#Datas : Angle & Intensity map detected
 float32[] angle
 float32[] intensity
 
-#Datas : Specific data (points detected with coordinates in RF & camera space)
+#Datas : Specific data (points detected with coordinates in RF space)
 uint32 numberPointDetected 
 
 #RF space coordinate
