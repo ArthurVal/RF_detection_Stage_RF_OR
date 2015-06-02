@@ -97,8 +97,8 @@ void RF_stub::getDataUART()
 					thetaStub -= 180;
 				}
 			}
-		} //!thetaDisable
-	
+		}else //!thetaDisable
+			thetaStub = 90;
 
 			//R
 		data_uart_spherical_RF.dist[i] = rStub;
@@ -118,8 +118,7 @@ void RF_stub::getDataUART()
 			data_intensity_map_RF_theta.intensity[j] = data_intensity_map_RF_theta.intensity[j] + (1.0/(sigma * sqrt(2*M_PI))) *
 																																												exp(-0.5 * pow(((data_intensity_map_RF_theta.angle[j]-thetaStub) / sigma),2) );			
 		}
-
-
-
 	}
+	if(isRemote)
+		ros::Duration(acquisitionTime).sleep();
 }
