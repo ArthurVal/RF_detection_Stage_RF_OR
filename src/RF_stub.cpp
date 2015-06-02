@@ -4,8 +4,8 @@
 /*----------------------------		 RF_stub::RF_stub()		---------------------------*/
 /*=================================================================================*/
 
-RF_stub::RF_stub(ros::Publisher* chatter_line_rviz, ros::Publisher* chatter_gauss, bool thetadis, bool print) 
-: RF_detection(chatter_line_rviz, chatter_gauss, thetadis, print)
+RF_stub::RF_stub(ros::Publisher* chatter_line_rviz, ros::Publisher* chatter_gauss, bool remote, bool thetadis, bool print) 
+: RF_detection(chatter_line_rviz, chatter_gauss, remote, thetadis, print)
 {	
 	srand (time(NULL));
 	nStub = rand() % 5 + 1; // between 1 & 5 detections
@@ -14,19 +14,6 @@ RF_stub::RF_stub(ros::Publisher* chatter_line_rviz, ros::Publisher* chatter_gaus
 	rStub = 1;
 	ROS_INFO("[RF node] Stub mode activated");
 }	
-
-RF_stub::RF_stub(ros::Publisher* chatter_line_rviz, bool thetadis, bool print) 
-: RF_detection(chatter_line_rviz, thetadis, print)
-{	
-	srand (time(NULL));
-	nStub = rand() % 5 + 1; // between 1 & 5 detections
-	phiStub = 0;
-	thetaStub = 90;
-	rStub = 1;
-	ROS_INFO("[RF node] Stub mode activated");
-}	
-
-
 
 /*===================================================================================*/
 /*===================================================================================*/

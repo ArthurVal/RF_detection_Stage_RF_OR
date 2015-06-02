@@ -23,13 +23,10 @@ class RF_stub : public RF_detection
 	public:
 			//Constructor
 		RF_stub(	ros::Publisher* chatter_line_rviz = NULL, 
-							ros::Publisher* chatter_gauss = NULL,  
-							bool thetadis = true, 
-							bool print = false);
-
-		RF_stub(	ros::Publisher* chatter_line_rviz = NULL, 
-							bool thetadis = true, 
-							bool print = false);
+									ros::Publisher* chatter_gauss = NULL,
+									bool remote = false,  
+									bool thetadis = true, 
+									bool print = false);
 
 			//Destructor
 		~RF_stub(){};
