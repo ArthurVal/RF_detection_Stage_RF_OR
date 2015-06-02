@@ -20,7 +20,7 @@ void printHelp(){
 	std::cout << "====================================================================================" << std::endl;
 }
 
-int parseArgument(int argc, char** argv, bool* enableStub, bool* thetaDisable, bool* verbose){
+int parseArgument(int argc, char** argv, bool* enableStub, bool* thetaDisable, bool* verbose, bool* remote){
 	for(int i = 0 ; i < argc ; ++i){		
 		if(strcmp ("--help",argv[i]) == 0){
 			printHelp();
@@ -34,7 +34,10 @@ int parseArgument(int argc, char** argv, bool* enableStub, bool* thetaDisable, b
 			*thetaDisable = true;
 
 		if(strcmp ("--verbose",argv[i]) == 0)
-			*verbose = true;			
+			*verbose = true;
+
+		if(strcmp ("--remote",argv[i]) == 0)
+			*remote = true;		
 	}
 	return 0;
 }
@@ -46,8 +49,10 @@ int main(int argc, char *argv[]){
 	bool stub = false;
 	bool thetaDis = false;
 	bool verbose = false;
-	
-	if(parseArgument(argc, argv, &stub, &thetaDis, &verbose) == -1)
+	bool remote = false;
+	RF_detection *detector;
+
+	if(parseArgument(argc, argv, &stub, &thetaDis, &verbose, &remote) == -1)
 		return 0;
 	
 	ROS_INFO("[RF node] Initialization of node : RF_detection_node");
@@ -57,35 +62,65 @@ int main(int argc, char *argv[]){
 
 	ROS_INFO("[RF node] Publishing to topic visualization_marker for Rviz");
 	ros::Publisher chatter_pub_line_rviz = r.advertise<visualization_msgs::Marker>("visualization_marker", 100 );
+	
 
-	ROS_INFO("[RF node] Publishing to topic rf_detection for RIDDLE_GUI");
-	ros::Publisher chatter_pub_gauss = r.advertise<rf_riddle::RF>("rf_riddle_intensity_map", 100 );
-
-	RF_detection *detector;
-
-		//Moop rate frequency in Hz (correspond to the publishing frequency of the topic)
-	ros::Rate loop_rate(10);
-
-	if(stub){
-		detector = new RF_stub(&chatter_pub_line_rviz, 
-														&chatter_pub_gauss,
+	if(remote){
+			/*-------- Remote loop ---------*/
+		
+		if(stub){
+			detector = new RF_stub(&chatter_pub_line_rviz,
 														thetaDis,
 														verbose
 														);
 
-	}else{
-		detector = new RF_detection(&chatter_pub_line_rviz, 
-																&chatter_pub_gauss,
+		}else{
+			detector = new RF_detection(&chatter_pub_line_rviz,
 																thetaDis,
 																verbose
 																);	
-	}
+		}	
+		ROS_INFO("[RF node] Creation of service rf_riddle_intensity_map for RIDDLE_GUI");
+		ros::ServiceServer chatter_rf = r.advertiseService("rf_riddle_intensity_map", &RF_detection::updateRF, detector);
 
-	while(ros::ok()){	
-		detector->updateRF();
-		ros::spinOnce();
-		loop_rate.sleep();
-	}		
-	ROS_INFO("[RF node] ShutDown of node : RF_detection_node");
-	return 0;
+		ros::spin();	
+		ROS_INFO("[RF node] ShutDown of node : RF_detection_node");
+		return 0;
+
+
+	}else{//(!remote)
+			/*-------- Automation loop (10Hz) ---------*/
+
+		ROS_INFO("[RF node] Publishing to topic rf_detection for RIDDLE_GUI");
+		ros::Publisher chatter_rf = r.advertise<rf_riddle::RF>("rf_riddle_intensity_map", 100 );
+			//Loop rate frequency in Hz (correspond to the publishing frequency of the topic)
+		ros::Rate loop_rate(10);
+
+		if(stub){
+			detector = new RF_stub(&chatter_pub_line_rviz, 
+														&chatter_rf,
+														thetaDis,
+														verbose
+														);
+
+		}else{
+			detector = new RF_detection(&chatter_pub_line_rviz, 
+																&chatter_rf,
+																thetaDis,
+																verbose
+																);	
+		}
+			//Fake data, not used in auto mode
+		rf_riddle::getRFData::Request req; 
+		rf_riddle::getRFData::Response res;
+
+		while(ros::ok()){	
+			detector->updateRF(req,res);
+			ros::spinOnce();
+			loop_rate.sleep();
+		}		
+		ROS_INFO("[RF node] ShutDown of node : RF_detection_node");
+		return 0;
+	}//(!remote)
+
+
 }

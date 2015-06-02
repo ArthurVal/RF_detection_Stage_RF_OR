@@ -3,6 +3,8 @@ Header header
 #Index of the message
 uint32 index
 
+RFSetup rfSetup
+
 geometry_msgs/Transform RF_CAM_Transform
 
 #Vector of data (one for phi, one for theta)

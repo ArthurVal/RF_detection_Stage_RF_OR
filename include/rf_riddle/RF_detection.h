@@ -5,6 +5,8 @@
 #include "ros/node_handle.h"
 #include "rf_riddle/RF.h"
 #include "rf_riddle/RFBase.h"
+#include "rf_riddle/RFSetup.h"
+#include "rf_riddle/getRFData.h"
 #include <visualization_msgs/Marker.h>
 
 #include <sstream>
@@ -38,6 +40,7 @@ typedef struct {
 
 class RF_detection 
 {
+	private:
 	
 	protected:
 			//Attributs
@@ -55,10 +58,14 @@ class RF_detection
 
 		bool verbose;
 		bool thetaDisable;
+		bool isRemote;
 		
 		double M_basis_R[3][3];
 		double Quaternion[4];
 		double M_basis_T[3];
+
+		double minTheta, maxTheta, minPhi, maxPhi, acquisitionTime;
+		unsigned int nPoint;
 
 		unsigned int iter;
 
@@ -66,6 +73,8 @@ class RF_detection
 
 			//Method
 		virtual void getDataUART();
+			//Initial Matrix (Edit this function to change the matrix basis change)
+		void initBasisChangeMatrix();
 		void convToCart();
 		void convToCam();
 		void RotToQuaternion(double* in_RotMatrix, double* out_QuaterVector);
@@ -79,11 +88,15 @@ class RF_detection
 									bool thetadis = true, 
 									bool print = false);
 
+		RF_detection(	ros::Publisher* chatter_line_rviz = NULL,
+									bool thetadis = true, 
+									bool print = false);
+
 			//Destructor
 		~RF_detection(){};
 
-			//Main function (Acquisition UART -> Publishing result on topic "Marker rviz" + topic with gaussian distribution on "rf_detection")
-		int updateRF();		
+			//Main function (Acquisition UART -> Publishing result on topic "Marker rviz" + topic with gaussian distribution on "rf_riddle_intensity_map" if auto , else, if remote, respond to service call of "rf_riddle_intensity_map" service)
+		bool updateRF(rf_riddle::getRFData::Request &req, rf_riddle::getRFData::Response &res);		
 	
 }; // class RF_detection 
 
