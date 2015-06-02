@@ -84,11 +84,8 @@ class RF_detection
 	public:
 			//Constructor
 		RF_detection(	ros::Publisher* chatter_line_rviz = NULL, 
-									ros::Publisher* chatter_gauss = NULL,  
-									bool thetadis = true, 
-									bool print = false);
-
-		RF_detection(	ros::Publisher* chatter_line_rviz = NULL,
+									ros::Publisher* chatter_gauss = NULL,
+									bool remote = false,  
 									bool thetadis = true, 
 									bool print = false);
 
@@ -96,7 +93,9 @@ class RF_detection
 		~RF_detection(){};
 
 			//Main function (Acquisition UART -> Publishing result on topic "Marker rviz" + topic with gaussian distribution on "rf_riddle_intensity_map" if auto , else, if remote, respond to service call of "rf_riddle_intensity_map" service)
-		bool updateRF(rf_riddle::getRFData::Request &req, rf_riddle::getRFData::Response &res);		
+		bool updateRF(rf_riddle::getRFData::Request &req, rf_riddle::getRFData::Response &res);
+
+		bool getIsRemote(){return isRemote;}	
 	
 }; // class RF_detection 
 

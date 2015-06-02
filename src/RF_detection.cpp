@@ -3,17 +3,18 @@
 /*=================================================================================*/
 /*-----------------------		 RF_detection::RF_detection()		-----------------------*/
 /*=================================================================================*/
-/*-----------------------		 Automated constructor (remote = 0)		-----------------------*/
-RF_detection::RF_detection(ros::Publisher* chatter_line_rviz, ros::Publisher* chatter_gauss, bool thetadis, bool print)
+RF_detection::RF_detection(ros::Publisher* chatter_line_rviz, 
+													ros::Publisher* chatter_gauss, 
+													bool remote, 
+													bool thetadis, 
+													bool print)
 {	
 		
 	chatter_pub_line_rviz = chatter_line_rviz;
-
-	ROS_INFO("[RF node] Automatic mode : 10Hz acquisition");	
-	isRemote = false;
 	chatter_pub_gauss = chatter_gauss;
 
 		//Set to default (May be changed in parseArgument of main.cpp)
+	isRemote = remote;
 	thetaDisable = thetadis;
 	verbose = print;
 
@@ -23,12 +24,19 @@ RF_detection::RF_detection(ros::Publisher* chatter_line_rviz, ros::Publisher* ch
 	if(thetaDisable)
 		ROS_INFO("[RF node] 2D RF data Acquisition");
 
+	if(!isRemote)
+		ROS_INFO("[RF node] Automatic mode : 10Hz acquisition (Topic = rf_riddle_intensity_map_topic)");
+	else
+		ROS_INFO("[RF node] Remote mode : Acquisiiton on demand (Service = rf_riddle_intensity_map_src)");
+	
+		
 	data_uart_spherical_camera.n = 0;
 	data_uart_spherical_RF.n = 0;	
 	data_uart_cartesian_camera.n = 0;
-	data_uart_cartesian_RF.n = 0;
-	
+	data_uart_cartesian_RF.n = 0;	
+
 	data_intensity_map_RF_phi.index = data_intensity_map_RF_theta.index = 0;
+
 	for(int i = 0 ; i < SIZE_DATA_RF ; ++i){
 			//angle = [-180->180]
 		data_intensity_map_RF_phi.intensity[i] = 0;
@@ -53,60 +61,6 @@ RF_detection::RF_detection(ros::Publisher* chatter_line_rviz, ros::Publisher* ch
 		
 	iter = 0;
 }
-
-/*-----------------------		 Remote constructor (remote = 1)		-----------------------*/
-RF_detection::RF_detection(ros::Publisher* chatter_line_rviz, bool thetadis, bool print)
-{	
-		
-	chatter_pub_line_rviz = chatter_line_rviz;
-
-	ROS_INFO("[RF node] Remote mode : Acquisiiton on demand (Service = rf_riddle_intensity_map)");
-	isRemote = true;
-	chatter_pub_gauss = NULL;
-
-		//Set to default (May be changed in parseArgument of main.cpp)
-	thetaDisable = thetadis;
-	verbose = print;
-
-	if(verbose)
-		ROS_INFO("[RF node] Verbose activated");
-
-	if(thetaDisable)
-		ROS_INFO("[RF node] 2D RF data Acquisition");
-
-	data_uart_spherical_camera.n = 0;
-	data_uart_spherical_RF.n = 0;	
-	data_uart_cartesian_camera.n = 0;
-	data_uart_cartesian_RF.n = 0;
-	
-	data_intensity_map_RF_phi.index = data_intensity_map_RF_theta.index = 0;
-	for(int i = 0 ; i < SIZE_DATA_RF ; ++i){
-			//angle = [-180->180]
-		data_intensity_map_RF_phi.intensity[i] = 0;
-		data_intensity_map_RF_phi.angle[i] = i * (360.0/SIZE_DATA_RF) - 180;
-
-		if(i < (SIZE_DATA_RF/2)){	
-				//angle = [0->180]		
-			data_intensity_map_RF_theta.intensity[i] = 0;
-			data_intensity_map_RF_theta.angle[i] = i * (180/(SIZE_DATA_RF/2));
-		}
-	}		
-
-	this->initBasisChangeMatrix();
-
-	minTheta = 0;	
-	maxTheta = 180;
-	minPhi = -180;
-	maxPhi = 180;
-
-	acquisitionTime = 1;
-	nPoint = 360;
-
-	iter = 0;	
-}
-
-
-
 
 /*=====================================================================================*/
 /*--------------------------		 RF_detection::updateRF()		---------------------------*/
