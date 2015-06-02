@@ -162,7 +162,7 @@ bool RF_detection::updateRF(rf_riddle::getRFData::Request &req,
 		//For all marker detect by the RF do :
 
 			//Initialization of outputs
-		detect_rf[i].header.frame_id = text_rf[i].header.frame_id = "/camera_rgb_frame";
+		detect_rf[i].header.frame_id = text_rf[i].header.frame_id = "camera_rgb_frame";
 		detect_rf[i].header.stamp = text_rf[i].header.stamp = ros::Time::now();
 
 
@@ -187,7 +187,9 @@ bool RF_detection::updateRF(rf_riddle::getRFData::Request &req,
 		detect_rf[i].pose.orientation.w = text_rf[i].pose.orientation.w = 1.0;
 		
 			//Scaling
-		detect_rf[i].scale.x = 0.02;
+		detect_rf[i].scale.x = 0.05;
+		detect_rf[i].scale.z = 0.05;
+		detect_rf[i].scale.y = 0.05;
 		text_rf[i].scale.z = 0.07;
 
 			//Color
