@@ -1,5 +1,3 @@
-<<<<<<< HEAD
-=======
 #include "RF_stub.h"
 
 /*=================================================================================*/
@@ -124,4 +122,3 @@ void RF_stub::getDataUART()
 	if(isRemote)
 		ros::Duration(acquisitionTime).sleep();
 }
->>>>>>> 3bcc61f513c22d53c294d23c1458901d79aca866
