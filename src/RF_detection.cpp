@@ -92,7 +92,7 @@ bool RF_detection::updateRF(rf_riddle::getRFData::Request &req,
 
 		//Debug purpose (can be disable)
 	ROS_INFO("---------------------------------------");
-  ROS_INFO("Iter %d | Detection RF : %d detection", iter, data_uart_spherical_camera.n);
+  ROS_INFO("Iter %d | Detection RF : %d detection", iter, data_uart_spherical_RF.n);
 
 		//If no detection stop
 	if(data_uart_spherical_RF.n == 0){
@@ -141,9 +141,12 @@ bool RF_detection::updateRF(rf_riddle::getRFData::Request &req,
 		detect_rf[i].pose.orientation.w = text_rf[i].pose.orientation.w = 1.0;
 		
 			//Scaling
-		detect_rf[i].scale.x = 0.05;
-		detect_rf[i].scale.z = 0.05;
-		detect_rf[i].scale.y = 0.05;
+		if(!thetaDisable){
+			detect_rf[i].scale.x = 0.05;
+			detect_rf[i].scale.y = 0.05;
+		}else{
+			detect_rf[i].scale.x = 0.03;			
+		}
 		text_rf[i].scale.z = 0.07;
 
 			//Color
@@ -152,8 +155,8 @@ bool RF_detection::updateRF(rf_riddle::getRFData::Request &req,
 		text_rf[i].color.a = 1.0;
 				//Red line & white text
 		detect_rf[i].color.r = 1.0;
-		text_rf[i].color.g = 1.0;
 		text_rf[i].color.r = 1.0;
+		text_rf[i].color.g = 1.0;
 		text_rf[i].color.b = 1.0;
 
 			//Create cartesian point detected
@@ -472,6 +475,7 @@ void RF_detection::printOutput()
 	if(thetaDisable)
 		ROS_INFO(">> Theta angle disable (2D detection)");
 	ROS_INFO(">> Number of detection : %d", data_uart_spherical_camera.n);
+	ROS_INFO(">> Camera rgb frame coordinate :");
 	
 	if(data_uart_spherical_camera.n >= 1){
 		for(int i = 0; i < data_uart_spherical_camera.n ; ++i){
