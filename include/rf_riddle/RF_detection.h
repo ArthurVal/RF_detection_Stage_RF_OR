@@ -7,6 +7,7 @@
 #include "rf_riddle/RFBase.h"
 #include "rf_riddle/RFSetup.h"
 #include "rf_riddle/getRFData.h"
+#include "rf_riddle/setRFParam.h"
 #include <visualization_msgs/Marker.h>
 
 #include <sstream>
@@ -58,7 +59,9 @@ class RF_detection
 
 		bool verbose;
 		bool thetaDisable;
+		bool thetaDisable_tmp;
 		bool isRemote;
+		bool isRemote_tmp;
 		
 		double M_basis_R[3][3];
 		double Quaternion[4];
@@ -67,12 +70,17 @@ class RF_detection
 		double minTheta, maxTheta, minPhi, maxPhi, acquisitionTime;
 		unsigned int nPoint;
 
+
+		double minTheta_tmp, maxTheta_tmp, minPhi_tmp, maxPhi_tmp, acquisitionTime_tmp;
+		unsigned int nPoint_tmp;
+
 		unsigned int iter;
 
 		//TBD
 
 			//Method
-		virtual void getDataUART();
+		virtual void getDataRF();
+
 			//Initial Matrix (Edit this function to change the matrix basis change)
 		void initBasisChangeMatrix();
 		void convToCart();
@@ -95,6 +103,13 @@ class RF_detection
 			//Main function (Acquisition UART -> Publishing result on topic "Marker rviz" + topic with gaussian distribution on "rf_riddle_intensity_map" if auto , else, if remote, respond to service call of "rf_riddle_intensity_map" service)
 		bool updateRF(rf_riddle::getRFData::Request &req, rf_riddle::getRFData::Response &res);
 
+			//Set the parameters that will be send to the RF for acquisition
+		bool updateRFParam(rf_riddle::setRFParam::Request &req, rf_riddle::setRFParam::Response &res);
+
+			//Set the parameters that will be send to the RF for acquisition
+		bool setRFIsRemote(rf_riddle::setRFParam::Request &req, rf_riddle::setRFParam::Response &res);
+
+		void updateParam();
 		bool getIsRemote(){return isRemote;}	
 	
 }; // class RF_detection 

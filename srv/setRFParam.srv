@@ -1,0 +1,10 @@
+#Setup needed for RF detection
+rf_riddle/RFSetup rfSetupNeeded
+
+#Param to set (or not) the node in remote controled mode
+bool remote
+
+#Param to set (or not) the thetaDisable param
+bool thetaDis
+
+---

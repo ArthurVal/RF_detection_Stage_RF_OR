@@ -18,7 +18,7 @@ class RF_stub : public RF_detection
 		int nStub;				//Number of detection
 
 			//Stub fake UART input
-		virtual void getDataUART(); 
+		virtual void getDataRF(); 
 
 	public:
 			//Constructor
