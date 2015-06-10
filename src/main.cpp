@@ -48,9 +48,9 @@ int parseArgument(int argc, char** argv, bool* enableStub, bool* thetaDisable, b
 int main(int argc, char *argv[]){
 
 	bool stub = false;
-	bool thetaDis = false;
+	bool thetaDis = true;
 	bool verbose = false;
-	bool remote = false;
+	bool remote = true;
 	RF_detection *detector;
 
 	if(parseArgument(argc, argv, &stub, &thetaDis, &verbose, &remote) == -1)
@@ -83,8 +83,10 @@ int main(int argc, char *argv[]){
 																);	
 	}	
 
-	ROS_INFO("[RF node] Creation of service rf_riddle_intensity_map for RIDDLE_GUI");
-	ros::ServiceServer server_rf = r.advertiseService("rf_riddle_intensity_map_srv", &RF_detection::updateRF, detector);
+	ROS_INFO("[RF node] Creation of service rf_riddle_intensity_map");
+	ros::ServiceServer server_data_rf = r.advertiseService("rf_riddle_intensity_map_srv", &RF_detection::updateRF, detector);
+	ROS_INFO("[RF node] Creation of service rf_riddle_set_param");
+	ros::ServiceServer server_param_rf = r.advertiseService("rf_riddle_set_param", &RF_detection::updateRFParam, detector);
 
 
 		//Loop rate frequency in Hz (correspond to the publishing frequency of the topic) : should be lower (Acquisition of UART data is slower than 10 Hz and is function of Acquisition time variable)
@@ -97,6 +99,7 @@ int main(int argc, char *argv[]){
 			rf_riddle::getRFData::Response res;
 			detector->updateRF(req,res);
 		}
+		detector->updateParam();
 		ros::spinOnce();
 		loop_rate.sleep();
 	}		

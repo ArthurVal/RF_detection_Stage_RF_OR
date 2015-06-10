@@ -1,5 +1,5 @@
 #include "RF_detection.h"
-
+#define ROS_INDIGO 1
 /*=================================================================================*/
 /*-----------------------		 RF_detection::RF_detection()		-----------------------*/
 /*=================================================================================*/
@@ -14,8 +14,8 @@ RF_detection::RF_detection(ros::Publisher* chatter_line_rviz,
 	chatter_pub_gauss = chatter_gauss;
 
 		//Set to default (May be changed in parseArgument of main.cpp)
-	isRemote = remote;
-	thetaDisable = thetadis;
+	isRemote = isRemote_tmp = remote;
+	thetaDisable = thetaDisable_tmp =thetadis;
 	verbose = print;
 
 	if(verbose)
@@ -51,13 +51,13 @@ RF_detection::RF_detection(ros::Publisher* chatter_line_rviz,
 
 	this->initBasisChangeMatrix();
 	
-	minTheta = 0;	
-	maxTheta = 180;
-	minPhi = -180;
-	maxPhi = 180;
+	minTheta = minTheta_tmp =0;	
+	maxTheta = maxTheta_tmp = 180;
+	minPhi = minPhi_tmp = -180;
+	maxPhi = minPhi_tmp = 180;
 
-	acquisitionTime = 1;
-	nPoint = 360;
+	acquisitionTime = acquisitionTime_tmp = 1;
+	nPoint = nPoint_tmp = 360;
 		
 	iter = 0;
 }
@@ -78,149 +78,164 @@ bool RF_detection::updateRF(rf_riddle::getRFData::Request &req,
 		//Update msg & publish to rostopic
 
 
+	if(chatter_pub_line_rviz && isRemote && ROS_INDIGO){
+			//Delete all rviz marker (ROS indigo only)
+		visualization_msgs::Marker delete_marker;
+		delete_marker.header.frame_id = "camera_rgb_frame";
+		delete_marker.action = 3 ; //visualization_msgs::Marker::DELETEALL;
+		chatter_pub_line_rviz->publish(delete_marker);
+	}
+
 		//Store setup needed for acquisition
 	if(isRemote){
-		minTheta = req.rfSetupNeeded.thetaMin;
-		maxTheta = req.rfSetupNeeded.thetaMax;
-		minPhi = req.rfSetupNeeded.phiMin;
-		maxPhi = req.rfSetupNeeded.phiMax;
-		acquisitionTime = req.rfSetupNeeded.acquisitionTime;
-		nPoint =  req.rfSetupNeeded.nPoints;
+		rf_riddle::setRFParam::Request req_; 
+		rf_riddle::setRFParam::Response res_;
+
+		req_.rfSetupNeeded = req.rfSetupNeeded;
+		req_.remote = isRemote;
+		req_.thetaDis = thetaDisable;
+
+		this->updateRFParam(req_,res_);
+		this->updateParam();
 	}
 		//Get the UART data from RF detection
-	getDataUART();
+	getDataRF();
 
 		//Debug purpose (can be disable)
 	ROS_INFO("---------------------------------------");
-  ROS_INFO("Iter %d | Detection RF : %d detection", iter, data_uart_spherical_camera.n);
+  ROS_INFO("Iter %d | Detection RF : %d detection", iter, data_uart_spherical_RF.n);
 
 		//If no detection stop
-	if(data_uart_spherical_RF.n == 0){
-		return false;
-	}
+	if(data_uart_spherical_RF.n != 0){
+	
 
-		//Convert data to cartesian coordinates	
-	this->convToCart();
+			//Convert data to cartesian coordinates	
+		this->convToCart();
 
-		//Convert to the camera referential
-	this->convToCam();
+			//Convert to the camera referential
+		this->convToCam();
 
-		//ROS Msg creation
-			//Msg rviz detection ()
-	visualization_msgs::Marker detect_rf[N_RF_MAX];
-			//Msg rviz TEXT (attached to the line)
-	visualization_msgs::Marker text_rf[N_RF_MAX];
-
-
-	for(int i = 0 ; i < data_uart_spherical_camera.n; ++i){
-		//For all marker detect by the RF do :
-
-			//Initialization of outputs
-		detect_rf[i].header.frame_id = text_rf[i].header.frame_id = "/camera_rgb_frame";
-		detect_rf[i].header.stamp = text_rf[i].header.stamp = ros::Time::now();
+			//ROS Msg creation
+				//Msg rviz detection ()
+		visualization_msgs::Marker detect_rf[N_RF_MAX];
+				//Msg rviz TEXT (attached to the line)
+		visualization_msgs::Marker text_rf[N_RF_MAX];
 
 
-			//ns & ID correspond to an unique identifier
-		std::ostringstream ID;
-		ID << "RF_detection_" << i;
-		detect_rf[i].ns = text_rf[i].ns = ID.str();
+		for(int i = 0 ; i < data_uart_spherical_camera.n; ++i){
+			//For all marker detect by the RF do :
 
-		detect_rf[i].id = 0;
-		text_rf[i].id = 1;
+				//Initialization of outputs
+			detect_rf[i].header.frame_id = text_rf[i].header.frame_id = "camera_rgb_frame";
+			detect_rf[i].header.stamp = text_rf[i].header.stamp = ros::Time::now();
 
-			//If theta disable then plot a curve at 90 degrees +- 45 degrees	
-		if(thetaDisable)
-			detect_rf[i].type = visualization_msgs::Marker::LINE_STRIP;
-		else
-			detect_rf[i].type = visualization_msgs::Marker::POINTS;
 
-		text_rf[i].type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+				//ns & ID correspond to an unique identifier
+			std::ostringstream ID;
+			ID << "RF_detection_" << i;
+			detect_rf[i].ns = text_rf[i].ns = ID.str();
+
+			detect_rf[i].id = 0;
+			text_rf[i].id = 1;
+
+				//If theta disable then plot a curve at 90 degrees +- 45 degrees	
+			if(thetaDisable)
+				detect_rf[i].type = visualization_msgs::Marker::LINE_STRIP;
+			else
+				detect_rf[i].type = visualization_msgs::Marker::POINTS;
+
+			text_rf[i].type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+			
+			detect_rf[i].action = text_rf[i].action = visualization_msgs::Marker::ADD;
+	
+			detect_rf[i].pose.orientation.w = text_rf[i].pose.orientation.w = 1.0;
 		
-		detect_rf[i].action = text_rf[i].action = visualization_msgs::Marker::ADD;
+				//Scaling
+			if(!thetaDisable){
+				detect_rf[i].scale.x = 0.05;
+				detect_rf[i].scale.y = 0.05;
+			}else{
+				detect_rf[i].scale.x = 0.03;			
+			}
+			text_rf[i].scale.z = 0.07;
+	
+				//Color
+					//Visible
+			detect_rf[i].color.a = 1.0;
+			text_rf[i].color.a = 1.0;
+					//Red line & white text
+			detect_rf[i].color.r = 1.0;
+			text_rf[i].color.r = 1.0;
+			text_rf[i].color.g = 1.0;
+			text_rf[i].color.b = 1.0;
 
-		detect_rf[i].pose.orientation.w = text_rf[i].pose.orientation.w = 1.0;
-		
-			//Scaling
-		detect_rf[i].scale.x = 0.02;
-		text_rf[i].scale.z = 0.07;
+				//Create cartesian point detected
+			geometry_msgs::Point p;
+	
+			if(thetaDisable){
+/*					//Creating a line list, require 2 point
+				p.x = data_uart_cartesian_camera.x[i];
+				p.y = data_uart_cartesian_camera.y[i] ;
+				p.z = data_uart_cartesian_camera.z[i] + 1;
+				detect_rf[i].points.push_back(p);
 
-			//Color
-				//Visible
-		detect_rf[i].color.a = 1.0;
-		text_rf[i].color.a = 1.0;
-				//Red line & white text
-		detect_rf[i].color.r = 1.0;
-		text_rf[i].color.g = 1.0;
-		text_rf[i].color.r = 1.0;
-		text_rf[i].color.b = 1.0;
-
-			//Create cartesian point detected
-		geometry_msgs::Point p;
-
-		if(thetaDisable){
-/*				//Creating a line list, require 2 point
-			p.x = data_uart_cartesian_camera.x[i];
-			p.y = data_uart_cartesian_camera.y[i] ;
-			p.z = data_uart_cartesian_camera.z[i] + 1;
-			detect_rf[i].points.push_back(p);
-
-			p.x = data_uart_cartesian_camera.x[i];
-			p.y = data_uart_cartesian_camera.y[i];
-			p.z = data_uart_cartesian_camera.z[i] - 1;
-			detect_rf[i].points.push_back(p);
+				p.x = data_uart_cartesian_camera.x[i];
+				p.y = data_uart_cartesian_camera.y[i];
+				p.z = data_uart_cartesian_camera.z[i] - 1;
+				detect_rf[i].points.push_back(p);
 */
-				//Creating a line strip (curve) with R = constant & Theta [90-45 ; 90+45]			
-			double init_theta_store;
-				//Store theta
-			init_theta_store = data_uart_spherical_RF.theta[i];
-
-			for(int k = 45; k <= 135; ++k){
-					//For theta = 45 to 135 degrees
-				data_uart_spherical_RF.theta[i] = (k) ; 
-					//Compute new coordinates
+					//Creating a line strip (curve) with R = constant & Theta [90-45 ; 90+45]			
+				double init_theta_store;
+					//Store theta
+				init_theta_store = data_uart_spherical_RF.theta[i];
+	
+				for(int k = 45; k <= 135; ++k){
+						//For theta = 45 to 135 degrees
+					data_uart_spherical_RF.theta[i] = (k) ; 
+						//Compute new coordinates
+					this->convToCart();
+					this->convToCam();
+						//Add point with coordinate to the line			
+					p.x = data_uart_cartesian_camera.x[i];
+					p.y = data_uart_cartesian_camera.y[i];
+					p.z = data_uart_cartesian_camera.z[i];
+					detect_rf[i].points.push_back(p);
+				}
+					//Restore previous theta
+				data_uart_spherical_RF.theta[i] = init_theta_store;
 				this->convToCart();
 				this->convToCam();
-					//Add point with coordinate to the line			
+	
+			}else{
 				p.x = data_uart_cartesian_camera.x[i];
 				p.y = data_uart_cartesian_camera.y[i];
 				p.z = data_uart_cartesian_camera.z[i];
 				detect_rf[i].points.push_back(p);
 			}
-				//Restore previous theta
-			data_uart_spherical_RF.theta[i] = init_theta_store;
-			this->convToCart();
-			this->convToCam();
+	
+				//Create Text (Same position than detection)
+			text_rf[i].pose.position.x = data_uart_cartesian_camera.x[i];
+			text_rf[i].pose.position.y = data_uart_cartesian_camera.y[i];
+			text_rf[i].pose.position.z = p.z - 0.2;
+	
+			std::ostringstream textOutput;
+			textOutput << "Detection RF  " << i << "\nR = " << data_uart_spherical_camera.dist[i] << "\nAngle Phi = " << data_uart_spherical_camera.phi[i] << "\nAngle Theta = " << data_uart_spherical_camera.theta[i];
 
-		}else{
-			p.x = data_uart_cartesian_camera.x[i];
-			p.y = data_uart_cartesian_camera.y[i];
-			p.z = data_uart_cartesian_camera.z[i];
-			detect_rf[i].points.push_back(p);
-		}
+			text_rf[i].text = textOutput.str();
+	
+				//lifetime of the marker (time it will appears on the rviz frame)
+			if(!isRemote)
+				detect_rf[i].lifetime = text_rf[i].lifetime = ros::Duration(acquisitionTime * 2); //time in sec
+			else
+				detect_rf[i].lifetime = text_rf[i].lifetime = ros::Duration(); //time in sec
 
-			//Create Text (Same position than detection)
-		text_rf[i].pose.position.x = data_uart_cartesian_camera.x[i];
-		text_rf[i].pose.position.y = data_uart_cartesian_camera.y[i];
-		text_rf[i].pose.position.z = p.z - 0.2;
+			if(chatter_pub_line_rviz){
+				chatter_pub_line_rviz->publish(detect_rf[i]);
+				chatter_pub_line_rviz->publish(text_rf[i]);
+			}
+		}// for n_detection
 
-		std::ostringstream textOutput;
-		textOutput << "Detection RF  " << i << "\nR = " << data_uart_spherical_camera.dist[i] << "\nAngle Phi = " << data_uart_spherical_camera.phi[i] << "\nAngle Theta = " << data_uart_spherical_camera.theta[i];
-
-		text_rf[i].text = textOutput.str();
-
-			//lifetime of the marker (time it will appears on the rviz frame)
-		if(!isRemote)
-			detect_rf[i].lifetime = text_rf[i].lifetime = ros::Duration(2); //time in sec
-		else
-			detect_rf[i].lifetime = text_rf[i].lifetime = ros::Duration(); //time in sec
-
-		if(chatter_pub_line_rviz){
-			chatter_pub_line_rviz->publish(detect_rf[i]);
-			chatter_pub_line_rviz->publish(text_rf[i]);
-		}
-	}// for n_detection
-
-		
+	}// data_uart_spherical_RF.n != 0
 		//Intensity map of the RF (GUI plotting data)
 	rf_riddle::RFBase intensity_map_rf_phi;
 	rf_riddle::RFBase intensity_map_rf_theta;
@@ -251,14 +266,17 @@ bool RF_detection::updateRF(rf_riddle::getRFData::Request &req,
 		intensity_map_rf_theta.intensity.push_back(data_intensity_map_RF_theta.intensity[i]);
 	}
 
-	intensity_map_rf_phi.numberPointDetected = intensity_map_rf_theta.numberPointDetected = data_uart_cartesian_RF.n;
-		//Points detected
-	for(int i = 0 ; i < data_uart_cartesian_camera.n ; ++i){
-		intensity_map_rf_phi.anglePointRF.push_back(data_uart_spherical_RF.phi[i]); 
-		intensity_map_rf_phi.distancePointRF.push_back(data_uart_spherical_RF.dist[i]); 
+	intensity_map_rf_phi.numberPointDetected = intensity_map_rf_theta.numberPointDetected = data_uart_spherical_RF.n;
 
-		intensity_map_rf_theta.anglePointRF.push_back(data_uart_spherical_RF.theta[i]); 
-		intensity_map_rf_theta.distancePointRF.push_back(data_uart_spherical_RF.dist[i]); 
+		//Points detected
+	if(data_uart_spherical_RF.n > 0) {
+		for(int i = 0 ; i < data_uart_cartesian_camera.n ; ++i){
+			intensity_map_rf_phi.anglePointRF.push_back(data_uart_spherical_RF.phi[i]); 
+			intensity_map_rf_phi.distancePointRF.push_back(data_uart_spherical_RF.dist[i]); 
+
+			intensity_map_rf_theta.anglePointRF.push_back(data_uart_spherical_RF.theta[i]); 
+			intensity_map_rf_theta.distancePointRF.push_back(data_uart_spherical_RF.dist[i]); 
+		}
 	}
 
 	intensity_map_rf.index = data_intensity_map_RF_phi.index;
@@ -289,6 +307,44 @@ bool RF_detection::updateRF(rf_riddle::getRFData::Request &req,
 	return true;
 }
 
+/*=====================================================================================*/
+/*-----------------------		 RF_detection::updateRFParam()		-------------------------*/
+/*=====================================================================================*/
+
+bool RF_detection::updateRFParam(rf_riddle::setRFParam::Request &req, 
+																rf_riddle::setRFParam::Response &res)
+{
+/*
+	std::cout << "[DEBUG] CALL updateRFParam" << std::endl;
+	std::cout << "[DEBUG] Data :" << std::endl;
+	std::cout << "[DEBUG] minTheta : " << req.rfSetupNeeded.thetaMin << std::endl;
+	std::cout << "[DEBUG] maxTheta : " << req.rfSetupNeeded.thetaMax << std::endl;
+	std::cout << "[DEBUG] minPhi : " << req.rfSetupNeeded.phiMin << std::endl;
+	std::cout << "[DEBUG] maxPhi : " << req.rfSetupNeeded.phiMax << std::endl;
+	std::cout << "[DEBUG] acquisitionTime : " << req.rfSetupNeeded.acquisitionTime << std::endl;
+	std::cout << "[DEBUG] nPoint : " << req.rfSetupNeeded.nPoints << std::endl;
+	if(req.remote)		
+		std::cout << "[DEBUG] isRemote : true" << std::endl;
+	else		
+		std::cout << "[DEBUG] isRemote : false" << std::endl;
+
+	if(req.thetaDis)		
+		std::cout << "[DEBUG] thetaDis : true" << std::endl;
+	else		
+		std::cout << "[DEBUG] thetaDis : false" << std::endl;		
+*/
+	minTheta_tmp = req.rfSetupNeeded.thetaMin;
+	maxTheta_tmp = req.rfSetupNeeded.thetaMax;
+	minPhi_tmp = req.rfSetupNeeded.phiMin;
+	maxPhi_tmp = req.rfSetupNeeded.phiMax;
+	acquisitionTime_tmp = req.rfSetupNeeded.acquisitionTime;
+	nPoint_tmp =  req.rfSetupNeeded.nPoints;	
+	isRemote_tmp = req.remote;	
+	thetaDisable_tmp = req.thetaDis;
+
+	return true;
+}
+
 /*===================================================================================*/
 /*===================================================================================*/
 /*=============================== Protected functions ===============================*/
@@ -298,15 +354,35 @@ bool RF_detection::updateRF(rf_riddle::getRFData::Request &req,
 
 
 /*=================================================================================*/
-/*---------------------		 RF_detection::getDataUART()		-------------------------*/
+/*---------------------		 RF_detection::getDataRF()		-------------------------*/
 /*------------------ Function that get the UART data input ------------------------*/
 /*=================================================================================*/
 
-void RF_detection::getDataUART()
+void RF_detection::getDataRF()
 {
-	std::cout << "==== UART not implemented yet ====" << std::endl;
+	std::cout << "==== UART/I2C not implemented yet ====" << std::endl;
 	/*TODO*/
 }
+
+/*=================================================================================*/
+/*---------------------		 RF_detection::updateParam()		-------------------------*/
+/*---------------- Function that put _tmp data in normal data ---------------------*/
+/*=================================================================================*/
+
+void RF_detection::updateParam()
+{
+	thetaDisable = thetaDisable_tmp;
+	isRemote = isRemote_tmp;
+
+	minTheta = minTheta_tmp;
+	maxTheta = maxTheta_tmp;
+	minPhi = minPhi_tmp;
+	maxPhi = maxPhi_tmp;
+	acquisitionTime = acquisitionTime_tmp;
+	nPoint = nPoint_tmp;
+}
+
+
 
 /*=================================================================================*/
 /*-----------------------		 RF_detection::convToCart()		-------------------------*/
@@ -375,6 +451,7 @@ void RF_detection::convToCam()
 /*-----------------		 RF_detection::RotToQuaternion()		-------------------------*/
 /*------------ Conversion from Rot Matrix to quaternion vector --------------------*/
 /*=================================================================================*/
+
 void RF_detection::RotToQuaternion(double* in_RotMatrix, double* out_QuaterVector)
 {
 	// Code find here : http://www.euclideanspace.com/maths/geometry/rotations/conversions/matrixToQuaternion/
@@ -470,6 +547,7 @@ void RF_detection::printOutput()
 	if(thetaDisable)
 		ROS_INFO(">> Theta angle disable (2D detection)");
 	ROS_INFO(">> Number of detection : %d", data_uart_spherical_camera.n);
+	ROS_INFO(">> Camera rgb frame coordinate :");
 	
 	if(data_uart_spherical_camera.n >= 1){
 		for(int i = 0; i < data_uart_spherical_camera.n ; ++i){

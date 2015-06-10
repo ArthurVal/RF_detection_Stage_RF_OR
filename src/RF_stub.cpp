@@ -33,14 +33,14 @@ RF_stub::RF_stub(ros::Publisher* chatter_line_rviz,
 /*=================================================================================*/
 
 
-void RF_stub::getDataUART()
+void RF_stub::getDataRF()
 { 
 
 	if(((iter%100) == 0) && !isRemote) //Every 20 iteration, new nStub
 		nStub = rand() % 6; //0 -> 5 detections
 	else 
 		if(isRemote)
-			nStub = 1;
+			nStub = rand() % 6;
 	
 	
 
@@ -55,11 +55,7 @@ void RF_stub::getDataUART()
 			//For all detection :
 		rStub = 2 - sin(0.1*ros::Time::now().toSec() + 2*i);
 
-		if(!isRemote){
-			phiStub = 0 + 45 * cos(0.1*ros::Time::now().toSec() + 0.5*i);
-		}else{
-			phiStub = (minPhi + ((maxPhi - minPhi)/2)) + ((maxPhi - minPhi) / 2) * cos(0.1*ros::Time::now().toSec() + 0.5*i);
-		}
+		phiStub = (minPhi + ((maxPhi - minPhi)/2)) + ((maxPhi - minPhi) / 2) * cos(0.1*ros::Time::now().toSec() + 0.5*i);
 
 		if(phiStub < -180){
 			while(phiStub < -180){
@@ -73,10 +69,8 @@ void RF_stub::getDataUART()
 		}
 
 		if(!thetaDisable){
-			if(!isRemote)
-				thetaStub = 90 - 45 * sin(0.1*ros::Time::now().toSec() + i);
-			else				
-				thetaStub = (minTheta + ((maxTheta - minTheta)/2)) + ((maxTheta - minTheta) / 2) * sin(0.1*ros::Time::now().toSec() + i);
+
+			thetaStub = (minTheta + ((maxTheta - minTheta)/2)) + ((maxTheta - minTheta) / 2) * sin(0.1*ros::Time::now().toSec() + i);
 		
 			if(thetaStub < 0){
 				while(thetaStub < 0){
@@ -110,6 +104,5 @@ void RF_stub::getDataUART()
 																																												exp(-0.5 * pow(((data_intensity_map_RF_theta.angle[j]-thetaStub) / sigma),2) );			
 		}
 	}
-	if(isRemote)
-		ros::Duration(acquisitionTime).sleep();
+	ros::Duration(acquisitionTime).sleep();
 }
