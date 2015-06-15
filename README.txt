@@ -1,18 +1,16 @@
 /==============================================================================/
-/                       README file RF_RIDDLE Ros package                         
+/                       README file RF_RIDDLE Ros package
+/
+/  Created by  : Arthur Valiente (CNRS-LAAS intern 2015) 
+/  Contact     : valiente.arthur@gmail.com 
 /                                                                                 
-/  Created by  : Arthur Valiente (CNRS-LAAS intern 2015)                    
-/  Contact     : valiente.arthur@gmail.com                                  
-/                                                                                 
-/  History :                                                                      
-/       Person       |       Date       |        Modification               
+/  History : 
+/       Person       |       Date       |        Modification   
 /----------------------------------------------------------------------
-/  Arthur Valiente   |    15/06/2015    |     Creation of the file            
-/                                                                                 
-/                                                                                
-/                                                                                 
-/                                                                                 
-/                                                                                  
+/  Arthur Valiente   |    15/06/2015    |     Creation of the file  
+/   
+/ 
+/
 /==============================================================================/
 
 
