@@ -18,10 +18,10 @@
 		DESCRIPTION
 
   This package has been created for the RIDDLE project at CNRS-LAAS of Toulouse.
-His goal is to provide a ROS module to be able to communicate with the RF electronics system created at the LAAS.
-Therefore, this packages can communication through UART/I2C (TO BE DEFINED) with the RF system to configure it or start an RF acquisition.
+Its goal is to provide a ROS module able to communicate with the RF electronic system created at the LAAS.
+Therefore, this packages can communicate through UART/I2C (TO BE DEFINED) with the RF system to configure it or start an RF acquisition.
 
-This package define few topics/services to be able to use and configure it with another ROS module. 
+This package define few topics/services to be able to use and configure it with other ROS module. 
 
 
 
