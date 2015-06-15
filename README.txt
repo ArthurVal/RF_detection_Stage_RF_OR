@@ -3,7 +3,7 @@
 /
 /  Created by  : Arthur Valiente (CNRS-LAAS intern 2015) 
 /  Contact     : valiente.arthur@gmail.com 
-/                                                                                 
+/
 /  History : 
 /       Person       |       Date       |        Modification   
 /----------------------------------------------------------------------
