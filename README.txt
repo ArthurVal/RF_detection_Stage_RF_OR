@@ -1,19 +1,19 @@
-/=================================================================================/
-/                       README file RF_RIDDLE Ros package                         /
-/                                                                                 /
-/  Created by        : Arthur Valiente (CNRS-LAAS intern 2015)                    /
-/  Contact           : valiente.arthur@gmail.com                                  /
-/                                                                                 /
-/  History :                                                                      /
-/       Person       |       Date       |              Modification               /
-/---------------------------------------------------------------------------------/
-/  Arthur Valiente   |    15/06/2015    |         Creation of the file            /
-/                                                                                 /
-/                                                                                 /
-/                                                                                 /
-/                                                                                 /
-/                                                                                 / 
-/=================================================================================/
+/==============================================================================/
+/                       README file RF_RIDDLE Ros package                         
+/                                                                                 
+/  Created by        : Arthur Valiente (CNRS-LAAS intern 2015)                    
+/  Contact           : valiente.arthur@gmail.com                                  
+/                                                                                 
+/  History :                                                                      
+/       Person       |       Date       |              Modification               
+/------------------------------------------------------------------------------
+/  Arthur Valiente   |    15/06/2015    |         Creation of the file            
+/                                                                                 
+/                                                                                
+/                                                                                 
+/                                                                                 
+/                                                                                  
+/==============================================================================/
 
 
 
@@ -28,6 +28,9 @@ This package define few topics/services to be able to use and configure it with 
 
 
 		INSTALLATION GUIDE (/!\ catkin & git require /!\)
+
+This node has been created & build on both Ubuntu 12.04 & 14.04 with ROS-hydro & ROS-indigo.
+Other versions of Ubuntu & ROS haven't been tested yet. 
 
     Dependances & ROS packages needed for installation :
       ROS :
