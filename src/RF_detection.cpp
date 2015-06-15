@@ -1,5 +1,5 @@
 #include "RF_detection.h"
-#define ROS_INDIGO 1
+#define ROS_INDIGO 0
 /*=================================================================================*/
 /*-----------------------		 RF_detection::RF_detection()		-----------------------*/
 /*=================================================================================*/
@@ -335,11 +335,16 @@ bool RF_detection::updateRFParam(rf_riddle::setRFParam::Request &req,
 */
 	minTheta_tmp = req.rfSetupNeeded.thetaMin;
 	maxTheta_tmp = req.rfSetupNeeded.thetaMax;
+
 	minPhi_tmp = req.rfSetupNeeded.phiMin;
 	maxPhi_tmp = req.rfSetupNeeded.phiMax;
+
 	acquisitionTime_tmp = req.rfSetupNeeded.acquisitionTime;
-	nPoint_tmp =  req.rfSetupNeeded.nPoints;	
-	isRemote_tmp = req.remote;	
+
+	nPoint_tmp =  req.rfSetupNeeded.nPoints;
+	
+	isRemote_tmp = req.remote;
+
 	thetaDisable_tmp = req.thetaDis;
 
 	return true;
