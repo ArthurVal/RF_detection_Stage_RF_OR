@@ -4,7 +4,11 @@
 /*----------------------------		 RF_stub::RF_stub()		---------------------------*/
 /*=================================================================================*/
 
-RF_stub::RF_stub(ros::Publisher* chatter_line_rviz, ros::Publisher* chatter_gauss, bool remote, bool thetadis, bool print) 
+RF_stub::RF_stub(ros::Publisher* chatter_line_rviz, 
+								 ros::Publisher* chatter_gauss, 
+								 bool remote, 
+								 bool thetadis, 
+								 bool print) 
 : RF_detection(chatter_line_rviz, chatter_gauss, remote, thetadis, print)
 {	
 	srand (time(NULL));

@@ -17,6 +17,7 @@ void printHelp(){
 	std::cout << "\t --thetaDisable : Disable Theta for detection (2D detection R & Phi)" << std::endl;
 	std::cout << "\t --remoteDisable : Disable the remote control (automatic acquisition & publishing on ros topic)" << std::endl;
 	std::cout << "\t --verbose : print data" << std::endl;
+	std::cout << "\t --remote : remote control mode : will publish data through rf_intensity_map_srv service" << std::endl;
 	std::cout << "\t --help : show this help" << std::endl;
 	std::cout << "====================================================================================" << std::endl;
 }
@@ -89,7 +90,7 @@ int main(int argc, char *argv[]){
 	ros::ServiceServer server_param_rf = r.advertiseService("rf_riddle_set_param", &RF_detection::updateRFParam, detector);
 
 
-		//Loop rate frequency in Hz (correspond to the publishing frequency of the topic)
+		//Loop rate frequency in Hz (correspond to the publishing frequency of the topic) : should be lower (Acquisition of UART data is slower than 10 Hz and is function of Acquisition time variable)
 	ros::Rate loop_rate(10);
 
 	while(ros::ok()){	
