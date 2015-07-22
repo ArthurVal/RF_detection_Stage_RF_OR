@@ -58,6 +58,9 @@ RF_detection::RF_detection(ros::Publisher* chatter_line_rviz,
 
 	acquisitionTime = acquisitionTime_tmp = 1;
 	nPoint = nPoint_tmp = 360;
+	freqTSCLK = freqTSCLK_tmp = 30000000;
+	freqEch = freqEch_tmp = 250000;
+	nEch = nEch_tmp = 400;
 		
 	iter = 0;
 }
@@ -341,6 +344,9 @@ bool RF_detection::updateRFParam(rf_riddle::setRFParam::Request &req,
 	nPoint_tmp =  req.rfSetupNeeded.nPoints;	
 	isRemote_tmp = req.remote;	
 	thetaDisable_tmp = req.thetaDis;
+	freqTSCLK_tmp = req.rfSetupNeeded.freqTSCLK;
+	freqEch_tmp = req.rfSetupNeeded.freqEch;
+	nEch_tmp = req.rfSetupNeeded.nEch;
 
 	return true;
 }
@@ -380,6 +386,9 @@ void RF_detection::updateParam()
 	maxPhi = maxPhi_tmp;
 	acquisitionTime = acquisitionTime_tmp;
 	nPoint = nPoint_tmp;
+	freqTSCLK = freqTSCLK_tmp;
+	freqEch = freqEch_tmp;
+	nEch = nEch_tmp;
 }
 
 

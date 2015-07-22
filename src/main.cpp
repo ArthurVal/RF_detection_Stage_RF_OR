@@ -15,6 +15,7 @@ void printHelp(){
 	std::cout << "Input Arguments :" << std::endl;
 	std::cout << "\t --stub : enable stub mode (fake UART detection)" << std::endl;
 	std::cout << "\t --thetaDisable : Disable Theta for detection (2D detection R & Phi)" << std::endl;
+	std::cout << "\t --remoteDisable : Disable the remote control (automatic acquisition & publishing on ros topic)" << std::endl;
 	std::cout << "\t --verbose : print data" << std::endl;
 	std::cout << "\t --help : show this help" << std::endl;
 	std::cout << "====================================================================================" << std::endl;
@@ -36,8 +37,8 @@ int parseArgument(int argc, char** argv, bool* enableStub, bool* thetaDisable, b
 		if(strcmp ("--verbose",argv[i]) == 0)
 			*verbose = true;
 
-		if(strcmp ("--remote",argv[i]) == 0)
-			*remote = true;		
+		if(strcmp ("--remoteDisable",argv[i]) == 0)
+			*remote = false;		
 	}
 	return 0;
 }

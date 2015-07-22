@@ -68,11 +68,11 @@ class RF_detection
 		double M_basis_T[3];
 
 		double minTheta, maxTheta, minPhi, maxPhi, acquisitionTime;
-		unsigned int nPoint;
+		unsigned int nPoint, freqTSCLK, freqEch, nEch;
 
 
 		double minTheta_tmp, maxTheta_tmp, minPhi_tmp, maxPhi_tmp, acquisitionTime_tmp;
-		unsigned int nPoint_tmp;
+		unsigned int nPoint_tmp, freqTSCLK_tmp, freqEch_tmp, nEch_tmp;
 
 		unsigned int iter;
 
