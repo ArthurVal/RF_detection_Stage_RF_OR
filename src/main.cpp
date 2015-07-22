@@ -17,7 +17,6 @@ void printHelp(){
 	std::cout << "\t --thetaDisable : Disable Theta for detection (2D detection R & Phi)" << std::endl;
 	std::cout << "\t --remoteDisable : Disable the remote control (automatic acquisition & publishing on ros topic)" << std::endl;
 	std::cout << "\t --verbose : print data" << std::endl;
-	std::cout << "\t --remote : remote control mode : will publish data through rf_intensity_map_srv service" << std::endl;
 	std::cout << "\t --help : show this help" << std::endl;
 	std::cout << "====================================================================================" << std::endl;
 }

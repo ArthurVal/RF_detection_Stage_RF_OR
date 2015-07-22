@@ -104,5 +104,5 @@ void RF_stub::getDataRF()
 																																												exp(-0.5 * pow(((data_intensity_map_RF_theta.angle[j]-thetaStub) / sigma),2) );			
 		}
 	}
-	ros::Duration(acquisitionTime).sleep();
+	ros::Duration(acquisitionTime/1000).sleep();
 }

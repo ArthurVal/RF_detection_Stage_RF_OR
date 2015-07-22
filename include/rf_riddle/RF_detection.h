@@ -73,6 +73,8 @@ class RF_detection
 
 		double minTheta_tmp, maxTheta_tmp, minPhi_tmp, maxPhi_tmp, acquisitionTime_tmp;
 		unsigned int nPoint_tmp, freqTSCLK_tmp, freqEch_tmp, nEch_tmp;
+		
+		double DSP_Q[2500], DSP_I[2500];
 
 		unsigned int iter;
 

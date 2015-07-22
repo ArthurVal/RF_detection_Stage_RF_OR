@@ -228,7 +228,7 @@ bool RF_detection::updateRF(rf_riddle::getRFData::Request &req,
 	
 				//lifetime of the marker (time it will appears on the rviz frame)
 			if(!isRemote)
-				detect_rf[i].lifetime = text_rf[i].lifetime = ros::Duration(acquisitionTime * 2); //time in sec
+				detect_rf[i].lifetime = text_rf[i].lifetime = ros::Duration(acquisitionTime/1000 * 2); //time in sec
 			else
 				detect_rf[i].lifetime = text_rf[i].lifetime = ros::Duration(); //time in sec
 
@@ -372,7 +372,39 @@ bool RF_detection::updateRFParam(rf_riddle::setRFParam::Request &req,
 void RF_detection::getDataRF()
 {
 	std::cout << "==== UART/I2C not implemented yet ====" << std::endl;
-	/*TODO*/
+	/*------------------------- TODO ---------------------------------*/
+	//Calcul du pas angulaire + création du tableau d'angle
+		//Phi
+
+		//Theta
+
+	//For all angles Phi:
+		//Send angular position Arduino
+		
+		//Send gotoangle Arduino
+
+		//Wait answer
+
+		//Send parameters to DSP I & Q
+
+		//Send start acqui
+
+		//Wait answer from both DSP
+
+		//Send Get Intensity Q
+
+		//Wait answer
+
+		//Send Get Intensity I
+
+		//Wait answer
+
+		//Calculate power & distance
+
+	//End For
+
+	
+		
 }
 
 /*=================================================================================*/
